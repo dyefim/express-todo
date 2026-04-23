@@ -1,8 +1,11 @@
 const express = require("express");
+const path = require("path");
 const fs = require("fs");
 
 const app = express();
 const port = 3000;
+
+app.use("/static", express.static(path.join(__dirname, "files")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
