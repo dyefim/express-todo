@@ -52,6 +52,22 @@ app.post("/", (req, res) => {
   res.status(201).send("Todo added successfully");
 });
 
+app.delete("/:id", (req, res) => {
+  const todos = JSON.parse(fs.readFileSync("todos.json", "utf-8"));
+
+  const { id } = req.params;
+
+  const newTodos = todos.filter((t) => t.id !== id);
+
+  if (todos.length === newTodos.length) {
+    return res.status(404).send("Todo not found");
+  }
+
+  fs.writeFileSync("todos.json", JSON.stringify(newTodos, null, 2));
+
+  res.send("Todo deleted successfully");
+});
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
