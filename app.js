@@ -44,12 +44,39 @@ app.post("/", (req, res) => {
   todos.push({
     id: randomUUID(),
     taskName,
-    done: done === "true",
+    done: done === true,
   });
 
   fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
   res.status(201).send("Todo added successfully");
+});
+
+app.patch("/:id", (req, res) => {
+  const todos = JSON.parse(fs.readFileSync("todos.json", "utf-8"));
+
+  const { id } = req.params;
+  const { taskName, done } = req.body;
+
+  const todoIndex = todos.findIndex((t) => t.id === id);
+
+  if (todoIndex === -1) {
+    return res.status(404).send("Todo not found");
+  }
+
+  if (taskName) {
+    todos[todoIndex].taskName = taskName;
+  }
+
+  console.log(done);
+
+  if (done) {
+    todos[todoIndex].done = done === true;
+  }
+
+  fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
+
+  res.send("Todo updated successfully");
 });
 
 app.delete("/:id", (req, res) => {
