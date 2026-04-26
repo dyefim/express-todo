@@ -14,12 +14,42 @@ app.use("/static", express.static(path.join(__dirname, "files")));
 
 app.use(express.json());
 
-app.get("/:id", (req, res) => {
+const loadTodosFromFile = () => {
   const todos = fs.readFileSync("todos.json", "utf-8");
+
+  return todos;
+};
+
+const parseTodos = (todos) => {
+  try {
+    return JSON.parse(todos);
+  } catch (error) {
+    console.error("Error parsing todos", error);
+    return null;
+  }
+};
+
+const loadParsedTodosOr500 = (res) => {
+  const todos = parseTodos(loadTodosFromFile());
+
+  if (!Array.isArray(todos)) {
+    res.status(500).send("Invalid todos data");
+    return null;
+  }
+
+  return todos;
+};
+
+app.get("/:id", (req, res) => {
+  const todos = loadParsedTodosOr500(res);
+
+  if (!todos) {
+    return;
+  }
 
   const { id } = req.params;
 
-  const todo = JSON.parse(todos).find((t) => t.id === id);
+  const todo = todos.find((t) => t.id === id);
 
   if (todo) {
     res.send(todo);
@@ -29,13 +59,17 @@ app.get("/:id", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  const todos = fs.readFileSync("todos.json", "utf-8");
+  const todos = loadTodosFromFile();
 
   res.send(todos);
 });
 
 app.post("/", (req, res) => {
-  const todos = JSON.parse(fs.readFileSync("todos.json", "utf-8"));
+  const todos = loadParsedTodosOr500(res);
+
+  if (!todos) {
+    return;
+  }
 
   const { taskName, done } = req.body;
 
@@ -57,7 +91,11 @@ app.post("/", (req, res) => {
 });
 
 app.patch("/:id", (req, res) => {
-  const todos = JSON.parse(fs.readFileSync("todos.json", "utf-8"));
+  const todos = loadParsedTodosOr500(res);
+
+  if (!todos) {
+    return;
+  }
 
   const { id } = req.params;
   const { taskName, done } = req.body;
@@ -82,7 +120,11 @@ app.patch("/:id", (req, res) => {
 });
 
 app.delete("/:id", (req, res) => {
-  const todos = JSON.parse(fs.readFileSync("todos.json", "utf-8"));
+  const todos = loadParsedTodosOr500(res);
+
+  if (!todos) {
+    return;
+  }
 
   const { id } = req.params;
 
@@ -98,5 +140,9 @@ app.delete("/:id", (req, res) => {
 });
 
 app.listen(port, () => {
+  if (!fs.existsSync("todos.json")) {
+    fs.writeFileSync("todos.json", "[]");
+  }
+
   console.log(`Example app listening on port ${port}`);
 });
