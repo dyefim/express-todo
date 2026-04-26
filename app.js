@@ -3,8 +3,12 @@ const path = require("path");
 const fs = require("fs");
 const { randomUUID } = require("node:crypto");
 
+const logger = require("./middleware/logger");
+
 const app = express();
 const port = 3000;
+
+app.use(logger);
 
 app.use("/static", express.static(path.join(__dirname, "files")));
 
@@ -67,8 +71,6 @@ app.patch("/:id", (req, res) => {
   if (taskName) {
     todos[todoIndex].taskName = taskName;
   }
-
-  console.log(done);
 
   if (done) {
     todos[todoIndex].done = done === true;
