@@ -43,3 +43,6 @@ Thumbs.db
 .cache/
 .tmp/
 temp/
+
+# todos, as they are generated and should not be committed
+todos.json
