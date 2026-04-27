@@ -15,9 +15,13 @@ app.use("/static", express.static(path.join(__dirname, "files")));
 app.use(express.json());
 
 const loadTodosFromFile = () => {
-  const todos = fs.readFileSync("todos.json", "utf-8");
+  try {
+    return fs.readFileSync("todos.json", "utf-8");
+  } catch (error) {
+    console.error("Error loading todos from file", error);
 
-  return todos;
+    return "[]";
+  }
 };
 
 const parseTodos = (todos) => {
@@ -33,12 +37,22 @@ const loadParsedTodosOr500 = (res) => {
   const todos = parseTodos(loadTodosFromFile());
 
   if (!Array.isArray(todos)) {
-    res.status(500).send("Invalid todos data");
+    res.status(500).send({ message: "Internal Server Error" });
     return null;
   }
 
   return todos;
 };
+
+app.get("/", (req, res) => {
+  const todos = loadParsedTodosOr500(res);
+
+  if (!todos) {
+    return;
+  }
+
+  res.json(todos);
+});
 
 app.get("/:id", (req, res) => {
   const todos = loadParsedTodosOr500(res);
@@ -52,16 +66,10 @@ app.get("/:id", (req, res) => {
   const todo = todos.find((t) => t.id === id);
 
   if (todo) {
-    res.send(todo);
+    res.json(todo);
   } else {
-    res.status(404).send("Todo not found");
+    res.status(404).send({ message: "Todo not found" });
   }
-});
-
-app.get("/", (req, res) => {
-  const todos = loadTodosFromFile();
-
-  res.send(todos);
 });
 
 app.post("/", (req, res) => {
@@ -73,10 +81,14 @@ app.post("/", (req, res) => {
 
   const { taskName, done } = req.body;
 
+  if (!taskName) {
+    return res.status(400).send({ message: "Task name is required" });
+  }
+
   const isTaskExist = todos.some((t) => t.taskName === taskName);
 
   if (isTaskExist) {
-    return res.status(400).send("Task already exists");
+    return res.status(400).send({ message: "Task already exists" });
   }
 
   todos.push({
@@ -87,7 +99,7 @@ app.post("/", (req, res) => {
 
   fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
-  res.status(201).send("Todo added successfully");
+  res.status(201).send({ message: "Todo added successfully" });
 });
 
 app.patch("/:id", (req, res) => {
@@ -103,20 +115,20 @@ app.patch("/:id", (req, res) => {
   const todoIndex = todos.findIndex((t) => t.id === id);
 
   if (todoIndex === -1) {
-    return res.status(404).send("Todo not found");
+    return res.status(404).send({ message: "Todo not found" });
   }
 
   if (taskName) {
     todos[todoIndex].taskName = taskName;
   }
 
-  if (done) {
+  if (typeof done === "boolean") {
     todos[todoIndex].done = done === true;
   }
 
   fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
-  res.send("Todo updated successfully");
+  res.send({ message: "Todo updated successfully" });
 });
 
 app.delete("/:id", (req, res) => {
@@ -131,17 +143,21 @@ app.delete("/:id", (req, res) => {
   const newTodos = todos.filter((t) => t.id !== id);
 
   if (todos.length === newTodos.length) {
-    return res.status(404).send("Todo not found");
+    return res.status(404).send({ message: "Todo not found" });
   }
 
   fs.writeFileSync("todos.json", JSON.stringify(newTodos, null, 2));
 
-  res.send("Todo deleted successfully");
+  res.send({ message: "Todo deleted successfully" });
 });
 
 app.listen(port, () => {
   if (!fs.existsSync("todos.json")) {
     fs.writeFileSync("todos.json", "[]");
+  }
+
+  if (!fs.existsSync("operations.log")) {
+    fs.writeFileSync("operations.log", "");
   }
 
   console.log(`Example app listening on port ${port}`);
