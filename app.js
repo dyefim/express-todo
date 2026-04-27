@@ -91,15 +91,17 @@ app.post("/todos", (req, res) => {
     return res.status(400).send({ message: "Task already exists" });
   }
 
-  todos.push({
+  const todo = {
     id: randomUUID(),
     taskName,
     done: done === true,
-  });
+  };
+
+  todos.push(todo);
 
   fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
-  res.status(201).send({ message: "Todo added successfully" });
+  res.status(201).json(todo);
 });
 
 app.patch("/todos/:id", (req, res) => {
@@ -128,7 +130,7 @@ app.patch("/todos/:id", (req, res) => {
 
   fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
-  res.send({ message: "Todo updated successfully" });
+  res.json(todos[todoIndex]);
 });
 
 app.delete("/todos/:id", (req, res) => {
@@ -148,7 +150,7 @@ app.delete("/todos/:id", (req, res) => {
 
   fs.writeFileSync("todos.json", JSON.stringify(newTodos, null, 2));
 
-  res.send({ message: "Todo deleted successfully" });
+  res.status(204).send();
 });
 
 app.listen(port, () => {
