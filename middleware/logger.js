@@ -2,7 +2,7 @@ const fs = require("fs").promises;
 
 const logger = (req, res, next) => {
   fs.appendFile(
-    "operations.log",
+    "logs/operations.log",
     `${req.method.padEnd(6)} ${req.url} ${new Date().toISOString()}\n`,
     (err) => {
       if (err) {
