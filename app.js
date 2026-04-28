@@ -3,6 +3,9 @@ const path = require("path");
 const fs = require("fs");
 const { randomUUID } = require("node:crypto");
 
+const { validate } = require("./validation");
+const { validateTaskName, validateDone } = require("./validation/todos");
+
 const logger = require("./middleware/logger");
 
 const app = express();
@@ -72,66 +75,78 @@ app.get("/todos/:id", (req, res) => {
   }
 });
 
-app.post("/todos", (req, res) => {
-  const todos = loadParsedTodosOr500(res);
+app.post(
+  "/todos",
+  // Validation middleware
+  validateTaskName({ required: true }),
+  validateDone,
+  validate,
+  // Route handler
+  (req, res) => {
+    const todos = loadParsedTodosOr500(res);
 
-  if (!todos) {
-    return;
-  }
+    if (!todos) {
+      return;
+    }
 
-  const { taskName, done } = req.body;
+    const { taskName, done } = req.body;
 
-  if (!taskName) {
-    return res.status(400).send({ message: "Task name is required" });
-  }
+    const isTaskExist = todos.some((t) => t.taskName === taskName);
 
-  const isTaskExist = todos.some((t) => t.taskName === taskName);
+    if (isTaskExist) {
+      return res.status(400).send({ message: "Task already exists" });
+    }
 
-  if (isTaskExist) {
-    return res.status(400).send({ message: "Task already exists" });
-  }
+    const todo = {
+      id: randomUUID(),
+      taskName,
+      done: done === true,
+    };
 
-  const todo = {
-    id: randomUUID(),
-    taskName,
-    done: done === true,
-  };
+    todos.push(todo);
 
-  todos.push(todo);
+    fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
-  fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
+    res.status(201).json(todo);
+  },
+);
 
-  res.status(201).json(todo);
-});
+app.patch(
+  "/todos/:id",
+  // Validation middleware
+  validateTaskName(),
+  validateDone,
+  validate,
+  // Route handler
+  (req, res) => {
+    const todos = loadParsedTodosOr500(res);
 
-app.patch("/todos/:id", (req, res) => {
-  const todos = loadParsedTodosOr500(res);
+    if (!todos) {
+      return;
+    }
 
-  if (!todos) {
-    return;
-  }
+    const { id } = req.params;
+    const { taskName, done } = req.body;
 
-  const { id } = req.params;
-  const { taskName, done } = req.body;
+    const todoIndex = todos.findIndex((t) => t.id === id);
 
-  const todoIndex = todos.findIndex((t) => t.id === id);
+    if (todoIndex === -1) {
+      return res.status(404).send({ message: "Todo not found" });
+    }
 
-  if (todoIndex === -1) {
-    return res.status(404).send({ message: "Todo not found" });
-  }
+    if (taskName) {
+      todos[todoIndex].taskName = taskName;
+    }
 
-  if (taskName) {
-    todos[todoIndex].taskName = taskName;
-  }
+    if (typeof done === "boolean") {
+      todos[todoIndex].done = done === true;
+    }
 
-  if (typeof done === "boolean") {
-    todos[todoIndex].done = done === true;
-  }
+    fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
 
-  fs.writeFileSync("todos.json", JSON.stringify(todos, null, 2));
-
-  res.json(todos[todoIndex]);
-});
+    res.json(todos[todoIndex]);
+  },
+);
 
 app.delete("/todos/:id", (req, res) => {
   const todos = loadParsedTodosOr500(res);
