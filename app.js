@@ -13,9 +13,9 @@ process.loadEnvFile();
 
 const HOST = "localhost";
 const PORT = process.env.PORT || 5432;
-const username = process.env.POSTGRES_USERNAME;
+const username = process.env.POSTGRES_USER;
 const password = process.env.POSTGRES_PASSWORD;
-const database = process.env.POSTGRES_DATABASE;
+const database = process.env.POSTGRES_DB;
 
 const db = pgp(
   `postgres://${username}${password ? `:${password}` : ""}@${HOST}:${PORT}/${database}`,
