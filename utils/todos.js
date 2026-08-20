@@ -1,35 +1,17 @@
-const fs = require("fs");
+const db = require("../db");
 
-const loadTodosFromFile = () => {
+const readTodosFromDatabase = async (res) => {
   try {
-    return fs.readFileSync("data/todos.json", "utf-8");
+    const todos = await db.any("SELECT * FROM todo_list");
+
+    return todos;
   } catch (error) {
-    console.error("Error loading todos from file", error);
+    console.error("Error reading todos from database", error);
 
-    return "[]";
+    return res.status(500).send({ message: "Internal Server Error" });
   }
-};
-
-const parseTodos = (todos) => {
-  try {
-    return JSON.parse(todos);
-  } catch (error) {
-    console.error("Error parsing todos", error);
-    return null;
-  }
-};
-
-const loadParsedTodosOr500 = (res) => {
-  const todos = parseTodos(loadTodosFromFile());
-
-  if (!Array.isArray(todos)) {
-    res.status(500).send({ message: "Internal Server Error" });
-    return null;
-  }
-
-  return todos;
 };
 
 module.exports = {
-  loadParsedTodosOr500,
+  readTodosFromDatabase,
 };

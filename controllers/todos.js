@@ -1,9 +1,8 @@
-const fs = require("fs");
-const { randomUUID } = require("node:crypto");
-const { loadParsedTodosOr500 } = require("../utils/todos");
+const { readTodosFromDatabase } = require("../utils/todos");
+const db = require("../db");
 
-const getTodos = (req, res) => {
-  const todos = loadParsedTodosOr500(res);
+const getTodos = async (req, res) => {
+  const todos = await readTodosFromDatabase(res);
 
   if (!todos) {
     return;
@@ -12,16 +11,26 @@ const getTodos = (req, res) => {
   res.json(todos);
 };
 
-const getTodoById = (req, res) => {
-  const todos = loadParsedTodosOr500(res);
+const checkIncompleteTodos = async () => {
+  try {
+    const data = await db.any("SELECT * FROM todo_list WHERE done = $1", [
+      false,
+    ]);
 
-  if (!todos) {
-    return;
+    console.log(`Found ${data.length} incomplete todos.`);
+
+    if (data.length > 0) {
+      console.log(data);
+    }
+  } catch (error) {
+    console.log("ERROR:", error);
   }
+};
 
+const getTodoById = async (req, res) => {
   const { id } = req.params;
 
-  const todo = todos.find((t) => t.id === id);
+  const todo = await db.one("SELECT * FROM todo_list WHERE id = $1", [id]);
 
   if (todo) {
     res.json(todo);
@@ -30,85 +39,80 @@ const getTodoById = (req, res) => {
   }
 };
 
-const createTodo = (req, res) => {
-  const todos = loadParsedTodosOr500(res);
-
-  if (!todos) {
-    return;
-  }
-
+const createTodo = async (req, res) => {
   const { taskName, done } = req.body;
 
-  const isTaskExist = todos.some((t) => t.taskName === taskName);
+  try {
+    const isTaskExist = await db.any(
+      "SELECT title FROM todo_list WHERE title = $1",
+      [taskName],
+    );
 
-  if (isTaskExist) {
-    return res.status(400).send({ message: "Task already exists" });
+    if (isTaskExist.length > 0) {
+      return res.status(400).send({ message: "Task already exists" });
+    }
+
+    const todo = await db.one(
+      "INSERT INTO todo_list(title, done) VALUES($1, $2) RETURNING id",
+      [taskName, done === true],
+    );
+
+    res.status(201).json(todo);
+  } catch (error) {
+    console.log("ERROR:", error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
-
-  const todo = {
-    id: randomUUID(),
-    taskName,
-    done: done === true,
-  };
-
-  todos.push(todo);
-
-  fs.writeFileSync("data/todos.json", JSON.stringify(todos, null, 2));
-
-  res.status(201).json(todo);
 };
 
-const updateTodo = (req, res) => {
-  const todos = loadParsedTodosOr500(res);
-
-  if (!todos) {
-    return;
-  }
-
+const updateTodo = async (req, res) => {
   const { id } = req.params;
   const { taskName, done } = req.body;
 
-  const todoIndex = todos.findIndex((t) => t.id === id);
+  try {
+    const todo = await db.one("SELECT * FROM todo_list WHERE id = $1", [id]);
 
-  if (todoIndex === -1) {
-    return res.status(404).send({ message: "Todo not found" });
+    if (!todo) {
+      return res.status(404).send({ message: "Todo not found" });
+    }
+
+    if (taskName) {
+      await db.none("UPDATE todo_list SET title = $1 WHERE id = $2", [
+        taskName,
+        id,
+      ]);
+    }
+
+    if (typeof done === "boolean") {
+      await db.none("UPDATE todo_list SET done = $1 WHERE id = $2", [done, id]);
+    }
+
+    res.status(200).json({ message: "Todo updated successfully" });
+  } catch (error) {
+    console.log("ERROR:", error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
-
-  if (taskName) {
-    todos[todoIndex].taskName = taskName;
-  }
-
-  if (typeof done === "boolean") {
-    todos[todoIndex].done = done === true;
-  }
-
-  fs.writeFileSync("data/todos.json", JSON.stringify(todos, null, 2));
-
-  res.json(todos[todoIndex]);
 };
 
-const deleteTodo = (req, res) => {
-  const todos = loadParsedTodosOr500(res);
-
-  if (!todos) {
-    return;
-  }
-
+const deleteTodo = async (req, res) => {
   const { id } = req.params;
 
-  const newTodos = todos.filter((t) => t.id !== id);
+  try {
+    const result = await db.result("DELETE FROM todo_list WHERE id = $1", [id]);
 
-  if (todos.length === newTodos.length) {
-    return res.status(404).send({ message: "Todo not found" });
+    if (result.rowCount === 0) {
+      return res.status(404).send({ message: "Todo not found" });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.log("ERROR:", error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
-
-  fs.writeFileSync("data/todos.json", JSON.stringify(newTodos, null, 2));
-
-  res.status(204).send();
 };
 
 module.exports = {
   getTodos,
+  checkIncompleteTodos,
   getTodoById,
   createTodo,
   updateTodo,
