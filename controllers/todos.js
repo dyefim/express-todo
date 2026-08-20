@@ -1,14 +1,15 @@
-const { readTodosFromDatabase } = require("../utils/todos");
 const db = require("../db");
 
 const getTodos = async (req, res) => {
-  const todos = await readTodosFromDatabase(res);
+  try {
+    const todos = await db.any("SELECT * FROM todo_list");
 
-  if (!todos) {
-    return;
+    return res.json(todos);
+  } catch (error) {
+    console.error("Error reading todos from database", error);
+
+    return res.status(500).send({ message: "Internal Server Error" });
   }
-
-  res.json(todos);
 };
 
 const checkIncompleteTodos = async () => {
@@ -30,7 +31,9 @@ const checkIncompleteTodos = async () => {
 const getTodoById = async (req, res) => {
   const { id } = req.params;
 
-  const todo = await db.one("SELECT * FROM todo_list WHERE id = $1", [id]);
+  const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
+    id,
+  ]);
 
   if (todo) {
     res.json(todo);
@@ -43,7 +46,7 @@ const createTodo = async (req, res) => {
   const { taskName, done } = req.body;
 
   try {
-    const isTaskExist = await db.any(
+    const isTaskExist = await db.oneOrNone(
       "SELECT title FROM todo_list WHERE title = $1",
       [taskName],
     );
@@ -69,7 +72,9 @@ const updateTodo = async (req, res) => {
   const { taskName, done } = req.body;
 
   try {
-    const todo = await db.one("SELECT * FROM todo_list WHERE id = $1", [id]);
+    const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
+      id,
+    ]);
 
     if (!todo) {
       return res.status(404).send({ message: "Todo not found" });
