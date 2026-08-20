@@ -54,23 +54,19 @@ const updateTodo = async (req, res) => {
   const { title, done } = req.body;
 
   try {
-    const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
-      id,
-    ]);
+    const updatedTodo = await db.oneOrNone(
+      `
+      UPDATE todo_list
+      SET title = COALESCE($1, title),
+          done = COALESCE($2, done)
+      WHERE id = $3
+      RETURNING id, title, done;
+    `,
+      [title, done, id],
+    );
 
-    if (!todo) {
-      return res.status(404).send({ message: "Todo not found" });
-    }
-
-    if (title) {
-      await db.none("UPDATE todo_list SET title = $1 WHERE id = $2", [
-        title,
-        id,
-      ]);
-    }
-
-    if (typeof done === "boolean") {
-      await db.none("UPDATE todo_list SET done = $1 WHERE id = $2", [done, id]);
+    if (!updatedTodo) {
+      return res.status(404).json({ message: "Todo not found" });
     }
 
     res.status(200).json({ message: "Todo updated successfully" });
