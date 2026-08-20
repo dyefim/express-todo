@@ -6,7 +6,7 @@ const validateDone = body("done")
   .withMessage("Done must be a boolean");
 
 const validateTaskName = ({ required } = {}) => {
-  const chain = body("taskName").isString().escape();
+  const chain = body("title").isString().escape();
 
   return required
     ? chain.notEmpty().withMessage("Task name is required")

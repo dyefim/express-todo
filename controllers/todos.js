@@ -43,12 +43,12 @@ const getTodoById = async (req, res) => {
 };
 
 const createTodo = async (req, res) => {
-  const { taskName, done } = req.body;
+  const { title, done } = req.body;
 
   try {
     const todo = await db.one(
       "INSERT INTO todo_list(title, done) VALUES($1, $2) RETURNING id, title, done",
-      [taskName, done === true],
+      [title, done === true],
     );
 
     res.status(201).json(todo);
@@ -62,7 +62,7 @@ const createTodo = async (req, res) => {
 
 const updateTodo = async (req, res) => {
   const { id } = req.params;
-  const { taskName, done } = req.body;
+  const { title, done } = req.body;
 
   try {
     const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
@@ -73,9 +73,9 @@ const updateTodo = async (req, res) => {
       return res.status(404).send({ message: "Todo not found" });
     }
 
-    if (taskName) {
+    if (title) {
       await db.none("UPDATE todo_list SET title = $1 WHERE id = $2", [
-        taskName,
+        title,
         id,
       ]);
     }
