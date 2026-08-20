@@ -46,24 +46,17 @@ const createTodo = async (req, res) => {
   const { taskName, done } = req.body;
 
   try {
-    const isTaskExist = await db.oneOrNone(
-      "SELECT title FROM todo_list WHERE title = $1",
-      [taskName],
-    );
-
-    if (isTaskExist.length > 0) {
-      return res.status(400).send({ message: "Task already exists" });
-    }
-
     const todo = await db.one(
-      "INSERT INTO todo_list(title, done) VALUES($1, $2) RETURNING id",
+      "INSERT INTO todo_list(title, done) VALUES($1, $2) RETURNING id, title, done",
       [taskName, done === true],
     );
 
     res.status(201).json(todo);
   } catch (error) {
-    console.log("ERROR:", error);
-    res.status(500).send({ message: "Internal Server Error" });
+    if (error.code === "23505") {
+      return res.status(400).json({ message: "Task already exists" });
+    }
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 

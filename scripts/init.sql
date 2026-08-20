@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS todo_list (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL UNIQUE,
     done BOOLEAN DEFAULT false
 );
 
