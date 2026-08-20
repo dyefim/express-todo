@@ -15,14 +15,19 @@ const getTodos = async (req, res) => {
 const getTodoById = async (req, res) => {
   const { id } = req.params;
 
-  const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
-    id,
-  ]);
+  try {
+    const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
+      id,
+    ]);
 
-  if (todo) {
-    res.json(todo);
-  } else {
-    res.status(404).send({ message: "Todo not found" });
+    if (todo) {
+      res.json(todo);
+    } else {
+      res.status(404).send({ message: "Todo not found" });
+    }
+  } catch (error) {
+    console.error("Error reading todo from database", error);
+    res.status(500).send({ message: "Internal Server Error" });
   }
 };
 
