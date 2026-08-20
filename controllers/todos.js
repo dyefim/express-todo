@@ -12,22 +12,6 @@ const getTodos = async (req, res) => {
   }
 };
 
-const checkIncompleteTodos = async () => {
-  try {
-    const data = await db.any("SELECT * FROM todo_list WHERE done = $1", [
-      false,
-    ]);
-
-    console.log(`Found ${data.length} incomplete todos.`);
-
-    if (data.length > 0) {
-      console.log(data);
-    }
-  } catch (error) {
-    console.log("ERROR:", error);
-  }
-};
-
 const getTodoById = async (req, res) => {
   const { id } = req.params;
 
@@ -110,7 +94,6 @@ const deleteTodo = async (req, res) => {
 
 module.exports = {
   getTodos,
-  checkIncompleteTodos,
   getTodoById,
   createTodo,
   updateTodo,

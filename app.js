@@ -3,7 +3,6 @@ const path = require("path");
 const fs = require("fs");
 
 const logger = require("./middleware/logger");
-const { checkIncompleteTodos } = require("./controllers/todos");
 
 const app = express();
 const port = 3000;
@@ -13,8 +12,6 @@ const db = require("./db");
 db.one("SELECT 1")
   .then(() => console.log("Database connected"))
   .catch((err) => console.error("Database connection failed:", err));
-
-checkIncompleteTodos();
 
 app.use(logger);
 app.use(express.json());
