@@ -1,18 +1,16 @@
 const db = require("../db");
 
-const getTodos = async (req, res) => {
+const getTodos = async (req, res, next) => {
   try {
     const todos = await db.any("SELECT * FROM todo_list");
 
     return res.json(todos);
   } catch (error) {
-    console.error("Error reading todos from database", error);
-
-    return res.status(500).send({ message: "Internal Server Error" });
+    next(error);
   }
 };
 
-const getTodoById = async (req, res) => {
+const getTodoById = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -26,12 +24,11 @@ const getTodoById = async (req, res) => {
       res.status(404).send({ message: "Todo not found" });
     }
   } catch (error) {
-    console.error("Error reading todo from database", error);
-    res.status(500).send({ message: "Internal Server Error" });
+    next(error);
   }
 };
 
-const createTodo = async (req, res) => {
+const createTodo = async (req, res, next) => {
   const { title, done } = req.body;
 
   try {
@@ -42,14 +39,11 @@ const createTodo = async (req, res) => {
 
     res.status(201).json(todo);
   } catch (error) {
-    if (error.code === "23505") {
-      return res.status(400).json({ message: "Task already exists" });
-    }
-    res.status(500).json({ message: "Internal Server Error" });
+    next(error);
   }
 };
 
-const updateTodo = async (req, res) => {
+const updateTodo = async (req, res, next) => {
   const { id } = req.params;
   const { title, done } = req.body;
 
@@ -71,12 +65,11 @@ const updateTodo = async (req, res) => {
 
     res.status(200).json({ message: "Todo updated successfully" });
   } catch (error) {
-    console.log("ERROR:", error);
-    res.status(500).send({ message: "Internal Server Error" });
+    next(error);
   }
 };
 
-const deleteTodo = async (req, res) => {
+const deleteTodo = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -88,8 +81,7 @@ const deleteTodo = async (req, res) => {
 
     res.status(204).send();
   } catch (error) {
-    console.log("ERROR:", error);
-    res.status(500).send({ message: "Internal Server Error" });
+    next(error);
   }
 };
 

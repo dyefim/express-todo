@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 const logger = require("./middleware/logger");
+const errorHandler = require("./middleware/error");
 
 const app = express();
 const port = 3000;
@@ -15,8 +16,11 @@ db.one("SELECT 1")
 
 app.use(logger);
 app.use(express.json());
+
 app.use("/static", express.static(path.join(__dirname, "files")));
 app.use("/todos", require("./routes/todos"));
+
+app.use(errorHandler);
 
 app.listen(port, () => {
   fs.mkdirSync("data", { recursive: true });
