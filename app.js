@@ -19,6 +19,7 @@ app.use(express.json());
 
 app.use("/static", express.static(path.join(__dirname, "files")));
 app.use("/todos", require("./routes/todos"));
+app.use("/auth", require("./routes/auth"));
 
 app.use(errorHandler);
 
