@@ -34,5 +34,5 @@ app.listen(port, () => {
     fs.writeFileSync("logs/operations.log", "");
   }
 
-  console.log(`Example app listening on port ${port}`);
+  console.log(`App listening on port ${port}`);
 });
