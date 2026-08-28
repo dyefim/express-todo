@@ -4,6 +4,15 @@ CREATE TABLE IF NOT EXISTS todo_list (
     done BOOLEAN DEFAULT false
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+DROP TABLE IF EXISTS admins;
+
 INSERT INTO todo_list (title, done) 
 VALUES ('Setup Docker + PostgreSQL', true)
 ON CONFLICT DO NOTHING;
