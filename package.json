@@ -8,7 +8,11 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "init:db": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -f /docker-entrypoint-initdb.d/init.sql'",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:drop": "docker compose down -v"
   },
   "dependencies": {
     "express": "^5.2.1",
