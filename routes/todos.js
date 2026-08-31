@@ -2,6 +2,7 @@ const express = require("express");
 const fs = require("fs");
 const { validateTaskName, validateDone } = require("../validation/todos");
 const validate = require("../middleware/validate");
+const { verifyToken } = require("../controllers/auth");
 const {
   getTodos,
   getTodoById,
@@ -10,7 +11,11 @@ const {
   deleteTodo,
 } = require("../controllers/todos");
 
+const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
+
 const router = express.Router();
+
+router.use(verifyToken);
 
 router.get("/", getTodos);
 

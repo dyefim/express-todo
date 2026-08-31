@@ -93,16 +93,15 @@ const login = async (req, res) => {
   res.json({ token });
 };
 
-const verifyToken = (req, res) => {
+const verifyToken = (req, res, next) => {
   try {
     const authHeader = req.header(tokenHeaderKey);
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
       : authHeader;
 
-    const verified = jwt.verify(token, jwtSecretKey);
-
-    return res.status(200).send({ valid: true, data: verified.data });
+    req.user = jwt.verify(token, jwtSecretKey).data;
+    next();
   } catch (err) {
     res.status(401).json({ valid: false, error: "Invalid or expired token" });
   }
