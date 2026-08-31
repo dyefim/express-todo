@@ -1,9 +1,3 @@
-CREATE TABLE IF NOT EXISTS todo_list (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL UNIQUE,
-    done BOOLEAN DEFAULT false
-);
-
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -11,7 +5,12 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-DROP TABLE IF EXISTS admins;
+CREATE TABLE IF NOT EXISTS todo_list (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    done BOOLEAN DEFAULT false,
+    created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
+);
 
 INSERT INTO todo_list (title, done) 
 VALUES ('Setup Docker + PostgreSQL', true)

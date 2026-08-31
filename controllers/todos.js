@@ -2,7 +2,10 @@ const db = require("../db");
 
 const getTodos = async (req, res, next) => {
   try {
-    const todos = await db.any("SELECT * FROM todo_list");
+    const todos = await db.any(
+      "SELECT * FROM todo_list WHERE created_by = $1",
+      [req.user.id],
+    );
 
     return res.json(todos);
   } catch (error) {
@@ -14,9 +17,10 @@ const getTodoById = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const todo = await db.oneOrNone("SELECT * FROM todo_list WHERE id = $1", [
-      id,
-    ]);
+    const todo = await db.oneOrNone(
+      "SELECT * FROM todo_list WHERE id = $1 AND created_by = $2",
+      [id, req.user.id],
+    );
 
     if (todo) {
       res.json(todo);
@@ -33,8 +37,8 @@ const createTodo = async (req, res, next) => {
 
   try {
     const todo = await db.one(
-      "INSERT INTO todo_list(title, done) VALUES($1, $2) RETURNING id, title, done",
-      [title, done === true],
+      "INSERT INTO todo_list(title, done, created_by) VALUES($1, $2, $3) RETURNING id, title, done, created_by",
+      [title, done === true, req.user.id],
     );
 
     res.status(201).json(todo);
@@ -53,10 +57,10 @@ const updateTodo = async (req, res, next) => {
       UPDATE todo_list
       SET title = COALESCE($1, title),
           done = COALESCE($2, done)
-      WHERE id = $3
+      WHERE id = $3 AND created_by = $4
       RETURNING id, title, done;
     `,
-      [title, done, id],
+      [title, done, id, req.user.id],
     );
 
     if (!updatedTodo) {
@@ -73,7 +77,10 @@ const deleteTodo = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const result = await db.result("DELETE FROM todo_list WHERE id = $1", [id]);
+    const result = await db.result(
+      "DELETE FROM todo_list WHERE id = $1 AND created_by = $2",
+      [id, req.user.id],
+    );
 
     if (result.rowCount === 0) {
       return res.status(404).send({ message: "Todo not found" });
