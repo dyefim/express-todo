@@ -1,5 +1,7 @@
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const fs = require("fs");
+
 const { validateTaskName, validateDone } = require("../validation/todos");
 const validate = require("../middleware/validate");
 const { verifyToken } = require("../controllers/auth");
@@ -14,6 +16,13 @@ const {
 const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
 
 const router = express.Router();
+
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  limit: 100,
+});
+
+router.use(limiter);
 
 router.use(verifyToken);
 
