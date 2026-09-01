@@ -1,6 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const db = require("../db");
 
@@ -16,6 +17,16 @@ if (!tokenHeaderKey || !jwtSecretKey) {
     "JWT_SECRET_KEY or TOKEN_HEADER_KEY is not defined in the environment variables",
   );
 }
+
+const mintAccessToken = (userId) =>
+  jwt.sign({ data: { user_id: userId } }, jwtSecretKey, {
+    expiresIn: "5m",
+  });
+
+const mintRefreshToken = (userId) => crypto.randomBytes(64).toString("hex");
+
+const getRefreshTokenExpirationDate = () =>
+  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
 const signUp = async (req, res, next) => {
   const { username, password } = req.body || {};
@@ -86,11 +97,49 @@ const login = async (req, res) => {
     return res.status(401).json({ error: "Invalid username or password" });
   }
 
-  const token = jwt.sign({ data: { id: user.id, username } }, jwtSecretKey, {
-    expiresIn: "1h",
-  });
+  const token = mintAccessToken(user.id);
 
-  res.json({ token });
+  const refreshToken = mintRefreshToken();
+
+  const tokenExpirationDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+  await db.none(
+    "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
+    [user.id, await refreshToken, tokenExpirationDate],
+  );
+  await db.none("DELETE FROM refresh_tokens WHERE expires_at < now()");
+
+  res.json({ token, refreshToken });
+};
+
+const refresh = async (req, res) => {
+  const { refreshToken } = req.body || {};
+
+  if (!refreshToken) {
+    return res.status(400).json({ error: "Refresh token is required" });
+  }
+
+  const storedToken = await db.oneOrNone(
+    "SELECT * FROM refresh_tokens WHERE token_hash = $1",
+    [refreshToken],
+  );
+
+  if (!storedToken || storedToken.expires_at < new Date()) {
+    return res.status(401).json({ error: "Invalid refresh token" });
+  }
+
+  const newAccessToken = mintAccessToken(storedToken.user_id);
+
+  const newRefreshToken = mintRefreshToken();
+  const tokenExpirationDate = getRefreshTokenExpirationDate();
+
+  await db.none(
+    "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
+    [storedToken.user_id, newRefreshToken, tokenExpirationDate],
+  );
+  await db.none("DELETE FROM refresh_tokens WHERE id = $1", [storedToken.id]);
+
+  res.json({ token: newAccessToken, refreshToken: newRefreshToken });
 };
 
 const verifyToken = (req, res, next) => {
@@ -110,5 +159,6 @@ const verifyToken = (req, res, next) => {
 module.exports = {
   signUp,
   login,
+  refresh,
   verifyToken,
 };

@@ -8,6 +8,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
+    "dev": "npm run docker:up && nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "init:db": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -f /docker-entrypoint-initdb.d/init.sql'",
     "docker:up": "docker compose up -d",
