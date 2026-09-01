@@ -1,6 +1,5 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
-const fs = require("fs");
 
 const { validateTaskName, validateDone } = require("../validation/todos");
 const validate = require("../middleware/validate");
@@ -12,8 +11,6 @@ const {
   updateTodo,
   deleteTodo,
 } = require("../controllers/todos");
-
-const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
 
 const router = express.Router();
 
