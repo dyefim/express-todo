@@ -11,10 +11,6 @@ const port = 3000;
 
 const db = require("./db");
 
-db.one("SELECT 1")
-  .then(() => console.log("Database connected"))
-  .catch((err) => console.error("Database connection failed:", err));
-
 app.use(logger);
 app.use(express.json());
 
@@ -24,16 +20,20 @@ app.use("/auth", require("./routes/auth"));
 
 app.use(errorHandler);
 
-app.listen(port, () => {
-  fs.mkdirSync("data", { recursive: true });
-  if (!fs.existsSync("data/todos.json")) {
-    fs.writeFileSync("data/todos.json", "[]");
-  }
+if (require.main === module) {
+  db.one("SELECT 1")
+    .then(() => console.log("Database connected"))
+    .catch((err) => console.error("Database connection failed:", err));
 
-  fs.mkdirSync("logs", { recursive: true });
-  if (!fs.existsSync("logs/operations.log")) {
-    fs.writeFileSync("logs/operations.log", "");
-  }
+  // Start the server only if this file is run directly
+  app.listen(port, () => {
+    fs.mkdirSync("logs", { recursive: true });
+    if (!fs.existsSync("logs/operations.log")) {
+      fs.writeFileSync("logs/operations.log", "");
+    }
 
-  console.log(`App listening on port ${port}`);
-});
+    console.log(`App listening on port ${port}`);
+  });
+}
+
+module.exports = app;

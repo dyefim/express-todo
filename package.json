@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "npm run docker:up && nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "init:db": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -f /docker-entrypoint-initdb.d/init.sql'",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -22,5 +22,8 @@
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
     "pg-promise": "^12.6.2"
+  },
+  "devDependencies": {
+    "supertest": "^7.2.2"
   }
 }
