@@ -19,7 +19,7 @@ if (!tokenHeaderKey || !jwtSecretKey) {
 }
 
 const mintAccessToken = (userId) =>
-  jwt.sign({ data: { user_id: userId } }, jwtSecretKey, {
+  jwt.sign({ data: { id: userId } }, jwtSecretKey, {
     expiresIn: "5m",
   });
 
