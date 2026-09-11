@@ -23,7 +23,7 @@ const mintAccessToken = (userId) =>
     expiresIn: "5m",
   });
 
-const mintRefreshToken = (userId) => crypto.randomBytes(64).toString("hex");
+const mintRefreshToken = () => crypto.randomBytes(64).toString("hex");
 
 const getRefreshTokenExpirationDate = () =>
   new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
