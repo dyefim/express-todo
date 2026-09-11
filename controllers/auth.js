@@ -161,4 +161,5 @@ module.exports = {
   login,
   refresh,
   verifyToken,
+  mintRefreshToken,
 };

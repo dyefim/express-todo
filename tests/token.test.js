@@ -6,11 +6,14 @@ const request = require("supertest");
 
 const app = require("../app");
 const db = require("../db");
+const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `token_test_${Date.now()}`;
 const password = "correct_password";
 
-const mintRefreshToken = () => crypto.randomBytes(64).toString("hex");
+let userId;
+let refreshToken;
+let rotatedRefreshToken;
 
 const expiredToken = jwt.sign({ data: { id: 0 } }, process.env.JWT_SECRET_KEY, {
   expiresIn: "0s",
@@ -59,27 +62,23 @@ describe("token authentication", () => {
 });
 
 describe("refresh token", () => {
-  const refreshToken = mintRefreshToken();
-
   before(async () => {
-    await db.none(
-      "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
-      [
-        1,
-        refreshToken,
-        new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
-      ],
-    );
+    const signUpResponse = await request(app)
+      .post("/auth/sign-up")
+      .send({ username, password });
+
+    userId = signUpResponse.body.id;
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({ username, password });
+
+    refreshToken = loginResponse.body.refreshToken;
   });
 
   after(async () => {
-    await db.none("DELETE FROM refresh_tokens WHERE token_hash IN ($1, $2)", [
-      refreshToken,
-      rotatedRefreshToken,
-    ]);
+    await db.none("DELETE FROM refresh_tokens");
   });
-
-  let rotatedRefreshToken;
 
   test("valid refresh token", async () => {
     const response = await request(app)

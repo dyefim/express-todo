@@ -4,21 +4,38 @@ const request = require("supertest");
 
 const app = require("../app");
 const db = require("../db");
+const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `login_test_${Date.now()}`;
 const password = "correct_login_password";
 
+let userId;
+let refreshToken;
+let rotatedRefreshToken;
+
 before(async () => {
   const passwordHash = await bcrypt.hash(password, 10);
 
-  await db.none("INSERT INTO users(username, password_hash) VALUES($1, $2)", [
-    username,
-    passwordHash,
-  ]);
+  const user = await db.one(
+    `INSERT INTO users(username, password_hash)
+     VALUES($1, $2)
+     RETURNING id`,
+    [username, passwordHash],
+  );
+
+  userId = user.id;
+  refreshToken = mintRefreshToken();
+
+  await db.none(
+    `INSERT INTO refresh_tokens(user_id, token_hash, expires_at)
+     VALUES($1, $2, $3)`,
+    [userId, refreshToken, new Date(Date.now() + 10 * 60 * 1000)],
+  );
 });
 
 after(async () => {
-  await db.none("DELETE FROM users WHERE username = $1", [username]);
+  await db.none("DELETE FROM refresh_tokens WHERE user_id = $1", [userId]);
+  await db.none("DELETE FROM users WHERE id = $1", [userId]);
 });
 
 describe("login", () => {
