@@ -1,10 +1,11 @@
-const path = require("node:path");
 const { after, afterEach, before, describe, test } = require("node:test");
 const request = require("supertest");
 const assert = require("node:assert/strict");
 
 const app = require("../app");
 const db = require("../db");
+
+const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
 
 const createdUsers = [];
 let userCounter = 0;
@@ -23,6 +24,19 @@ const createUser = async (username, password = "password1") => {
 
   createdUsers.push(user);
   return user;
+};
+
+const asUser = async (user) => {
+  const response = await request(app)
+    .post("/auth/login")
+    .send({ username: user.username, password: user.password })
+    .expect(200);
+  const authorization = `Bearer ${response.body.token}`;
+
+  return {
+    get: (url) => request(app).get(url).set(tokenHeaderKey, authorization),
+    post: (url) => request(app).post(url).set(tokenHeaderKey, authorization),
+  };
 };
 
 after(async () => {
@@ -44,44 +58,27 @@ describe("todos are protected", () => {
   });
 
   test("user 1 can see their todos", async () => {
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({ username: userA.username, password: userA.password });
-    await request(app)
-      .get("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect(200, []);
+    const userARequest = await asUser(userA);
+
+    await userARequest.get("/todos").expect(200, []);
   });
 
   test("user 2 can see their todos", async () => {
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({ username: userB.username, password: userB.password });
-    await request(app)
-      .get("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect(200, []);
+    const userBRequest = await asUser(userB);
+
+    await userBRequest.get("/todos").expect(200, []);
   });
 
   test("user 1 cannot see user 2's todos", async () => {
-    const userALogin = await request(app)
-      .post("/auth/login")
-      .send({ username: userA.username, password: userA.password });
+    const userARequest = await asUser(userA);
+    const userBRequest = await asUser(userB);
 
-    const userBLogin = await request(app)
-      .post("/auth/login")
-      .send({ username: userB.username, password: userB.password });
-
-    const todoResponse = await request(app)
+    const todoResponse = await userBRequest
       .post("/todos")
-      .set("Authorization", `Bearer ${userBLogin.body.token}`)
       .send({ title: "User 2 todo" })
       .expect(201);
 
-    await request(app)
-      .get(`/todos/${todoResponse.body.id}`)
-      .set("Authorization", `Bearer ${userALogin.body.token}`)
-      .expect(404);
+    await userARequest.get(`/todos/${todoResponse.body.id}`).expect(404);
   });
 });
 
@@ -97,115 +94,72 @@ describe("todos can be sorted", () => {
   });
 
   test("by title", async () => {
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({ username: user.username, password: user.password });
+    const userRequest = await asUser(user);
 
-    await request(app)
-      .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .send({ title: "A todo" });
-    await request(app)
-      .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .send({ title: "C todo" });
-    await request(app)
-      .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .send({ title: "B todo" });
+    await userRequest.post("/todos").send({ title: "A todo" });
+    await userRequest.post("/todos").send({ title: "C todo" });
+    await userRequest.post("/todos").send({ title: "B todo" });
 
-    await request(app)
-      .get("/todos?sort=title")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect((res) => {
-        assert.strictEqual(res.body[0].title, "A todo");
-        assert.strictEqual(res.body[1].title, "B todo");
-        assert.strictEqual(res.body[2].title, "C todo");
-      });
+    await userRequest.get("/todos?sort=title").expect((res) => {
+      assert.strictEqual(res.body[0].title, "A todo");
+      assert.strictEqual(res.body[1].title, "B todo");
+      assert.strictEqual(res.body[2].title, "C todo");
+    });
 
-    await request(app)
-      .get("/todos?sort=title&order=desc")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect((res) => {
-        assert.strictEqual(res.body[0].title, "C todo");
-        assert.strictEqual(res.body[1].title, "B todo");
-        assert.strictEqual(res.body[2].title, "A todo");
-      });
+    await userRequest.get("/todos?sort=title&order=desc").expect((res) => {
+      assert.strictEqual(res.body[0].title, "C todo");
+      assert.strictEqual(res.body[1].title, "B todo");
+      assert.strictEqual(res.body[2].title, "A todo");
+    });
   });
 
   test("by creation date", async () => {
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({ username: user.username, password: user.password });
+    const userRequest = await asUser(user);
 
-    await request(app)
-      .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .send({ title: "First todo" });
-    await request(app)
-      .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .send({ title: "Second todo" });
+    await userRequest.post("/todos").send({ title: "First todo" });
+    await userRequest.post("/todos").send({ title: "Second todo" });
 
-    await request(app)
-      .get("/todos?sort=created_at")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect((res) => {
-        const firstIndex = res.body.findIndex(
-          (todo) => todo.title === "First todo",
-        );
-        const secondIndex = res.body.findIndex(
-          (todo) => todo.title === "Second todo",
-        );
+    await userRequest.get("/todos?sort=created_at").expect((res) => {
+      const firstIndex = res.body.findIndex(
+        (todo) => todo.title === "First todo",
+      );
+      const secondIndex = res.body.findIndex(
+        (todo) => todo.title === "Second todo",
+      );
 
-        assert.strictEqual(res.body[firstIndex].title, "First todo");
-        assert.strictEqual(res.body[secondIndex].title, "Second todo");
-      });
+      assert.strictEqual(res.body[firstIndex].title, "First todo");
+      assert.strictEqual(res.body[secondIndex].title, "Second todo");
+    });
 
-    await request(app)
-      .get("/todos?sort=created_at&order=desc")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect((res) => {
-        const firstIndex = res.body.findIndex(
-          (todo) => todo.title === "First todo",
-        );
-        const secondIndex = res.body.findIndex(
-          (todo) => todo.title === "Second todo",
-        );
+    await userRequest.get("/todos?sort=created_at&order=desc").expect((res) => {
+      const firstIndex = res.body.findIndex(
+        (todo) => todo.title === "First todo",
+      );
+      const secondIndex = res.body.findIndex(
+        (todo) => todo.title === "Second todo",
+      );
 
-        assert.strictEqual(res.body[firstIndex].title, "First todo");
-        assert.strictEqual(res.body[secondIndex].title, "Second todo");
-      });
+      assert.strictEqual(res.body[firstIndex].title, "First todo");
+      assert.strictEqual(res.body[secondIndex].title, "Second todo");
+    });
   });
 
   test("by completion status", async () => {
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({ username: user.username, password: user.password });
+    const userRequest = await asUser(user);
 
-    await request(app)
+    await userRequest.post("/todos").send({ title: "Incomplete todo" });
+    await userRequest
       .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .send({ title: "Incomplete todo" });
-    await request(app)
-      .post("/todos")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
       .send({ title: "Completed todo", done: true });
 
-    await request(app)
-      .get("/todos?sort=completed")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect((res) => {
-        assert.strictEqual(res.body[0].title, "Incomplete todo");
-        assert.strictEqual(res.body[1].title, "Completed todo");
-      });
+    await userRequest.get("/todos?sort=completed").expect((res) => {
+      assert.strictEqual(res.body[0].title, "Incomplete todo");
+      assert.strictEqual(res.body[1].title, "Completed todo");
+    });
 
-    await request(app)
-      .get("/todos?sort=completed&order=desc")
-      .set("Authorization", `Bearer ${loginResponse.body.token}`)
-      .expect((res) => {
-        assert.strictEqual(res.body[0].title, "Completed todo");
-        assert.strictEqual(res.body[1].title, "Incomplete todo");
-      });
+    await userRequest.get("/todos?sort=completed&order=desc").expect((res) => {
+      assert.strictEqual(res.body[0].title, "Completed todo");
+      assert.strictEqual(res.body[1].title, "Incomplete todo");
+    });
   });
 });
