@@ -1,9 +1,18 @@
 const db = require("../db");
 
+const sortFieldMap = {
+  completed: "done",
+};
+
 const getTodos = async (req, res, next) => {
   try {
+    const { sort, order } = req.query;
+
+    const orderFilter = order === "desc" ? "DESC" : "ASC";
+
     const todos = await db.any(
-      "SELECT * FROM todo_list WHERE created_by = $1",
+      "SELECT * FROM todo_list WHERE created_by = $1" +
+        (sort ? ` ORDER BY ${sortFieldMap[sort] || sort} ${orderFilter}` : ""),
       [req.user.id],
     );
 
