@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS todo_list (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     done BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
