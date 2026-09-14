@@ -36,6 +36,7 @@ before(async () => {
 after(async () => {
   await db.none("DELETE FROM refresh_tokens WHERE user_id = $1", [userId]);
   await db.none("DELETE FROM users WHERE id = $1", [userId]);
+  await db.$pool.end();
 });
 
 describe("login", () => {

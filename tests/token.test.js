@@ -78,6 +78,7 @@ describe("refresh token", () => {
 
   after(async () => {
     await db.none("DELETE FROM refresh_tokens");
+    await db.$pool.end();
   });
 
   test("valid refresh token", async () => {

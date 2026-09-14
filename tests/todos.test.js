@@ -17,6 +17,7 @@ before(async () => {
 
 after(async () => {
   await db.any("DELETE FROM users");
+  await db.$pool.end();
 });
 
 describe("todos are protected", () => {
