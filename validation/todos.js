@@ -25,7 +25,9 @@ const validateQueryParams = (req) => {
   );
 
   if (hasUnknownQueryParam) {
-    return { error: "Invalid query parameter" };
+    return {
+      error: `Invalid query parameter. Allowed query parameters are: ${Array.from(ALLOWED_QUERY_PARAMS).join(", ")}`,
+    };
   }
 
   const hasMultipleInstancesOfQueryParam = Object.keys(query).some((key) =>
@@ -41,13 +43,17 @@ const validateQueryParams = (req) => {
   const hasInvalidSortField = query.sort && !SORT_FIELDS.has(query.sort);
 
   if (hasInvalidSortField) {
-    return { error: "Invalid sort parameter" };
+    return {
+      error: `Invalid sort parameter. Allowed sort fields are: ${Array.from(SORT_FIELDS).join(", ")}`,
+    };
   }
 
   const hasInvalidOrderValue = query.order && !ORDER_VALUES.has(query.order);
 
   if (hasInvalidOrderValue) {
-    return { error: "Invalid order parameter" };
+    return {
+      error: `Invalid order parameter. Allowed order values are: ${Array.from(ORDER_VALUES).join(", ")}`,
+    };
   }
 };
 
