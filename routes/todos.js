@@ -23,7 +23,7 @@ router.use(limiter);
 
 router.use(verifyToken);
 
-router.get("/", getTodos);
+router.get("/", validate, getTodos);
 
 router.get("/:id", getTodoById);
 

@@ -13,7 +13,46 @@ const validateTaskName = ({ required } = {}) => {
     : chain.optional().withMessage("Task name must be a string");
 };
 
+const ALLOWED_QUERY_PARAMS = new Set(["sort", "order"]);
+const SORT_FIELDS = new Set(["title", "created_at", "completed"]);
+const ORDER_VALUES = new Set(["asc", "desc"]);
+
+const validateQueryParams = (req) => {
+  const { query } = req;
+
+  const hasUnknownQueryParam = Object.keys(query).some(
+    (key) => !ALLOWED_QUERY_PARAMS.has(key),
+  );
+
+  if (hasUnknownQueryParam) {
+    return { error: "Invalid query parameter" };
+  }
+
+  const hasMultipleInstancesOfQueryParam = Object.keys(query).some((key) =>
+    Array.isArray(query[key]),
+  );
+
+  if (hasMultipleInstancesOfQueryParam) {
+    return {
+      error: "Multiple instances of the same query parameter are not allowed",
+    };
+  }
+
+  const hasInvalidSortField = query.sort && !SORT_FIELDS.has(query.sort);
+
+  if (hasInvalidSortField) {
+    return { error: "Invalid sort parameter" };
+  }
+
+  const hasInvalidOrderValue = query.order && !ORDER_VALUES.has(query.order);
+
+  if (hasInvalidOrderValue) {
+    return { error: "Invalid order parameter" };
+  }
+};
+
 module.exports = {
   validateDone,
   validateTaskName,
+  validateQueryParams,
 };

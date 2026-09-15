@@ -12,7 +12,7 @@ const getTodos = async (req, res, next) => {
 
     const todos = await db.any(
       "SELECT * FROM todo_list WHERE created_by = $1" +
-        (sort ? ` ORDER BY ${sortFieldMap[sort] || sort} ${orderFilter}` : ""),
+        (sort ? ` ORDER BY ${sortFieldMap[sort] || sort || "created_at"} ${orderFilter}` : ""),
       [req.user.id],
     );
 
