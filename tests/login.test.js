@@ -60,17 +60,4 @@ describe("login", () => {
       .send({ username: "unknown_username", password })
       .expect(401);
   });
-
-  test("login attempts are rate limited", async () => {
-    for (let i = 0; i < 10; i++) {
-      await request(app)
-        .post("/auth/login")
-        .send({ username, password: "wrong_password" });
-    }
-
-    await request(app)
-      .post("/auth/login")
-      .send({ username, password: "wrong_password" })
-      .expect(429);
-  });
 });

@@ -163,3 +163,23 @@ describe("todos can be sorted", () => {
     });
   });
 });
+
+describe("todos can be searched", () => {
+  let user;
+
+  before(async () => {
+    user = await createUser(`sorting_user_${++userCounter}`);
+  });
+  
+  test("by title", async () => {
+    const userRequest = await asUser(user);
+
+    await userRequest.post("/todos").send({ title: "First todo" });
+    await userRequest.post("/todos").send({ title: "Second todo" });
+
+    await userRequest.get("/todos?search=First").expect((res) => {
+      assert.strictEqual(res.body.length, 1);
+      assert.strictEqual(res.body[0].title, "First todo");
+    });
+  });
+});

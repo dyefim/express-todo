@@ -6,15 +6,23 @@ const sortFieldMap = {
 
 const getTodos = async (req, res, next) => {
   try {
-    const { sort, order } = req.query;
+    const { sort, order, search } = req.query;
 
     const orderFilter = order === "desc" ? "DESC" : "ASC";
 
-    const todos = await db.any(
-      "SELECT * FROM todo_list WHERE created_by = $1" +
-        (sort ? ` ORDER BY ${sortFieldMap[sort] || sort || "created_at"} ${orderFilter}` : ""),
-      [req.user.id],
-    );
+    const query = ["SELECT * FROM todo_list WHERE created_by = $1"];
+    const params = [req.user.id];
+
+    if (search) {
+      query.push(`AND title ILIKE $${params.length + 1}`);
+      params.push(`%${search}%`);
+    }
+
+    if (sort) {
+      query.push(`ORDER BY ${sortFieldMap[sort] || sort} ${orderFilter}`);
+    }
+
+    const todos = await db.any(query.join(" "), params);
 
     return res.json(todos);
   } catch (error) {

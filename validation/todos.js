@@ -13,7 +13,7 @@ const validateTaskName = ({ required } = {}) => {
     : chain.optional().withMessage("Task name must be a string");
 };
 
-const ALLOWED_QUERY_PARAMS = new Set(["sort", "order"]);
+const ALLOWED_QUERY_PARAMS = new Set(["sort", "order", "search"]);
 const SORT_FIELDS = new Set(["title", "created_at", "completed"]);
 const ORDER_VALUES = new Set(["asc", "desc"]);
 

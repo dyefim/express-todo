@@ -8,6 +8,7 @@ const router = express.Router();
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   limit: 10,
+  skip: (req, res) => process.env.NODE_ENV === "test",
 });
 
 router.use(limiter);

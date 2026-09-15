@@ -1,7 +1,6 @@
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
-const rateLimit = require("express-rate-limit");
 
 const logger = require("./middleware/logger");
 const errorHandler = require("./middleware/error");
