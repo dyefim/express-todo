@@ -1,37 +1,21 @@
 const { after, afterEach, before, describe, test } = require("node:test");
 const request = require("supertest");
 const assert = require("node:assert/strict");
+const jwt = require("jsonwebtoken");
 
 const app = require("../app");
 const db = require("../db");
 
 const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
+const jwtSecretKey = process.env.JWT_SECRET_KEY;
 
-const createdUsers = [];
-let userCounter = 0;
-
-const createUser = async (username, password = "password1") => {
-  const response = await request(app)
-    .post("/auth/sign-up")
-    .send({ username, password })
-    .expect(201);
-
-  const user = {
-    username,
-    password,
-    id: response.body.user.id,
-  };
-
-  createdUsers.push(user);
-  return user;
-};
+const mintAccessToken = (userId) =>
+  jwt.sign({ data: { id: userId } }, jwtSecretKey, {
+    expiresIn: "5m",
+  });
 
 const asUser = async (user) => {
-  const response = await request(app)
-    .post("/auth/login")
-    .send({ username: user.username, password: user.password })
-    .expect(200);
-  const authorization = `Bearer ${response.body.token}`;
+  const authorization = `Bearer ${user.token}`;
 
   return {
     get: (url) => request(app).get(url).set(tokenHeaderKey, authorization),
@@ -39,24 +23,26 @@ const asUser = async (user) => {
   };
 };
 
+let [userA, userB] = [];
+
+before(async () => {
+  [userA, userB] = await db.many(
+    "INSERT INTO users(username, password_hash) VALUES($1, $2), ($3, $4) RETURNING id, username",
+    ["UserA_todos_test", "password1", "UserB_todos_test", "password2"],
+  );
+
+  userA.token = mintAccessToken(userA.id);
+  userB.token = mintAccessToken(userB.id);
+});
+
 after(async () => {
-  const userIds = createdUsers.map((user) => user.id);
-  if (userIds.length > 0) {
-    await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [userIds]);
-  }
+  await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [
+    [userA.id, userB.id],
+  ]);
   await db.$pool.end();
 });
 
 describe("todos are protected", () => {
-  let userA;
-  let userB;
-
-  before(async () => {
-    const suffix = ++userCounter;
-    userA = await createUser(`protected_userA_${suffix}`, "password1");
-    userB = await createUser(`protected_userB_${suffix}`, "password2");
-  });
-
   test("user 1 can see their todos", async () => {
     const userARequest = await asUser(userA);
 
@@ -83,18 +69,12 @@ describe("todos are protected", () => {
 });
 
 describe("todos can be sorted", () => {
-  let user;
-
-  before(async () => {
-    user = await createUser(`sorting_user_${++userCounter}`);
-  });
-
   afterEach(async () => {
-    await db.none("DELETE FROM todo_list WHERE created_by = $1", [user.id]);
+    await db.none("DELETE FROM todo_list WHERE created_by = $1", [userA.id]);
   });
 
   test("by title", async () => {
-    const userRequest = await asUser(user);
+    const userRequest = await asUser(userA);
 
     await userRequest.post("/todos").send({ title: "A todo" });
     await userRequest.post("/todos").send({ title: "C todo" });
@@ -114,7 +94,7 @@ describe("todos can be sorted", () => {
   });
 
   test("by creation date", async () => {
-    const userRequest = await asUser(user);
+    const userRequest = await asUser(userA);
 
     await userRequest.post("/todos").send({ title: "First todo" });
     await userRequest.post("/todos").send({ title: "Second todo" });
@@ -145,7 +125,7 @@ describe("todos can be sorted", () => {
   });
 
   test("by completion status", async () => {
-    const userRequest = await asUser(user);
+    const userRequest = await asUser(userA);
 
     await userRequest.post("/todos").send({ title: "Incomplete todo" });
     await userRequest
@@ -165,14 +145,8 @@ describe("todos can be sorted", () => {
 });
 
 describe("todos can be searched", () => {
-  let user;
-
-  before(async () => {
-    user = await createUser(`sorting_user_${++userCounter}`);
-  });
-  
   test("by title", async () => {
-    const userRequest = await asUser(user);
+    const userRequest = await asUser(userA);
 
     await userRequest.post("/todos").send({ title: "First todo" });
     await userRequest.post("/todos").send({ title: "Second todo" });
