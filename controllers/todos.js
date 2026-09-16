@@ -6,7 +6,7 @@ const sortFieldMap = {
 
 const getTodos = async (req, res, next) => {
   try {
-    const { sort, order, search } = req.query;
+    const { sort, order, search, page = 0, size = 10 } = req.query;
 
     const orderFilter = order === "desc" ? "DESC" : "ASC";
 
@@ -18,13 +18,37 @@ const getTodos = async (req, res, next) => {
       params.push(`%${search}%`);
     }
 
-    if (sort) {
-      query.push(`ORDER BY ${sortFieldMap[sort] || sort} ${orderFilter}`);
-    }
+    const totalElements = await db.one(
+      query
+        .join(" ")
+        .replace(
+          "SELECT * FROM todo_list",
+          "SELECT COUNT(*) AS count FROM todo_list",
+        ),
+      params,
+    );
+    const totalCount = parseInt(totalElements.count, 10);
+
+    query.push(
+      `ORDER BY ${sortFieldMap[sort] || sort || "created_at"} ${orderFilter}`,
+    );
+
+    const zeroBasedPage = Math.max(0, parseInt(page, 10) - 1);
+
+    query.push(`LIMIT $${params.length + 1} OFFSET $${params.length + 2}`);
+    params.push(size, zeroBasedPage * size);
 
     const todos = await db.any(query.join(" "), params);
 
-    return res.json(todos);
+    return res.json({
+      data: todos,
+      page: {
+        size,
+        totalElements: totalCount,
+        totalPages: Math.ceil(totalCount / size),
+        number: zeroBasedPage,
+      },
+    });
   } catch (error) {
     next(error);
   }
