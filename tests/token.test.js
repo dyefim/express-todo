@@ -11,7 +11,6 @@ const { mintRefreshToken } = require("../controllers/auth");
 const username = `token_test_${Date.now()}`;
 const password = "correct_password";
 
-let userId;
 let refreshToken;
 let rotatedRefreshToken;
 
@@ -25,6 +24,12 @@ const tamperedToken = jwt.sign({ data: { id: 0 } }, "wrong_secret_key", {
 
 const validToken = jwt.sign({ data: { id: 0 } }, process.env.JWT_SECRET_KEY, {
   expiresIn: "10m",
+});
+
+after(async () => {
+  await db.none("DELETE FROM refresh_tokens");
+  await db.none("DELETE FROM users WHERE username = $1", [username]);
+  await db.$pool.end();
 });
 
 describe("token authentication", () => {
@@ -67,18 +72,11 @@ describe("refresh token", () => {
       .post("/auth/sign-up")
       .send({ username, password });
 
-    userId = signUpResponse.body.id;
-
     const loginResponse = await request(app)
       .post("/auth/login")
       .send({ username, password });
 
     refreshToken = loginResponse.body.refreshToken;
-  });
-
-  after(async () => {
-    await db.none("DELETE FROM refresh_tokens");
-    await db.$pool.end();
   });
 
   test("valid refresh token", async () => {

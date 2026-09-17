@@ -35,7 +35,7 @@ const createUser = async (username, password = "pa55w0rd") => {
 
   user.token = mintAccessToken(user.id);
 
-  createdUsers.push(user);
+  createdUsers.push(user.id);
 
   return user;
 };
@@ -53,9 +53,7 @@ const createCategory = async (user, categoryName) => {
 };
 
 after(async () => {
-  await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [
-    createdUsers.map((user) => user.id),
-  ]);
+  await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [createdUsers]);
   await db.none("DELETE FROM todo_categories WHERE id = ANY($1::int[])", [
     createdCategoryIds,
   ]);
