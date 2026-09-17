@@ -74,12 +74,14 @@ const getTodoById = async (req, res, next) => {
 };
 
 const createTodo = async (req, res, next) => {
-  const { title, done } = req.body;
+  const { title, done, categories } = req.body;
 
   try {
     const todo = await db.one(
-      "INSERT INTO todo_list(title, done, created_by) VALUES($1, $2, $3) RETURNING id, title, done, created_by",
-      [title, done === true, req.user.id],
+      `INSERT INTO todo_list(title, done, categories, created_by) 
+        VALUES($1, $2, $3, $4) 
+        RETURNING id, title, done, categories, created_by`,
+      [title, done === true, categories, req.user.id],
     );
 
     res.status(201).json(todo);
@@ -90,18 +92,19 @@ const createTodo = async (req, res, next) => {
 
 const updateTodo = async (req, res, next) => {
   const { id } = req.params;
-  const { title, done } = req.body;
+  const { title, done, categories } = req.body;
 
   try {
     const updatedTodo = await db.oneOrNone(
       `
       UPDATE todo_list
       SET title = COALESCE($1, title),
-          done = COALESCE($2, done)
-      WHERE id = $3 AND created_by = $4
+          done = COALESCE($2, done),
+          categories = COALESCE($3, categories)
+      WHERE id = $4 AND created_by = $5
       RETURNING id, title, done;
     `,
-      [title, done, id, req.user.id],
+      [title, done, categories, id, req.user.id],
     );
 
     if (!updatedTodo) {

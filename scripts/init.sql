@@ -19,10 +19,22 @@ CREATE TABLE IF NOT EXISTS todo_list (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     done BOOLEAN DEFAULT false,
+    categories INTEGER[],
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
-INSERT INTO todo_list (title, done) 
-VALUES ('Setup Docker + PostgreSQL', true)
+CREATE TABLE IF NOT EXISTS todo_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
+);
+
+INSERT INTO todo_categories (name) 
+VALUES 
+    ('Low'),
+    ('Medium'),
+    ('High'),
+    ('Urgent'),
 ON CONFLICT DO NOTHING;
