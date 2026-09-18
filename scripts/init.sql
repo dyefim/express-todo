@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS todo_list (
     title VARCHAR(255) NOT NULL,
     done BOOLEAN DEFAULT false,
     categories INTEGER[],
+    is_deleted BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );

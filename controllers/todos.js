@@ -10,7 +10,9 @@ const getTodos = async (req, res, next) => {
 
     const orderFilter = order === "desc" ? "DESC" : "ASC";
 
-    const query = ["SELECT * FROM todo_list WHERE created_by = $1"];
+    const query = [
+      "SELECT * FROM todo_list WHERE created_by = $1 AND is_deleted = false",
+    ];
     const params = [req.user.id];
 
     if (search) {
@@ -121,12 +123,14 @@ const deleteTodo = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const result = await db.result(
-      "DELETE FROM todo_list WHERE id = $1 AND created_by = $2",
+    const result = await db.oneOrNone(
+      "UPDATE todo_list SET is_deleted = true WHERE id = $1 AND created_by = $2 RETURNING id",
       [id, req.user.id],
     );
 
-    if (result.rowCount === 0) {
+    console.log(">>>>>>", result);
+
+    if (!result) {
       return res.status(404).send({ message: "Todo not found" });
     }
 

@@ -18,6 +18,8 @@ const asUser = async (user) => {
   return {
     get: (url) => request(app).get(url).set(tokenHeaderKey, authorization),
     post: (url) => request(app).post(url).set(tokenHeaderKey, authorization),
+    delete: (url) =>
+      request(app).delete(url).set(tokenHeaderKey, authorization),
   };
 };
 
@@ -216,5 +218,43 @@ describe("todos are paginated", () => {
       assert.strictEqual(res.body.page.number, 2); // zero based pagination
       assert.strictEqual(res.body.page.totalElements, 15);
     });
+  });
+});
+
+describe("todos are soft deleted", () => {
+  let userA;
+  let todoId;
+
+  before(async () => {
+    userA = await createUser("UserA_todos_test_soft_deleted");
+  });
+
+  after(async () => {
+    await db.none("DELETE FROM todo_list WHERE id = $1", [todoId]);
+  });
+
+  test("soft delete a todo", async () => {
+    const userRequest = await asUser(userA);
+
+    // Create a todo
+    const createResponse = await userRequest
+      .post("/todos")
+      .send({ title: "Todo to be deleted" });
+    todoId = createResponse.body.id;
+
+    // Soft delete the todo
+    await userRequest.delete(`/todos/${todoId}`).expect(204);
+
+    // Verify the todo is not returned in the list
+    await userRequest.get("/todos").expect((res) => {
+      assert.notStrictEqual(res.body.data, []);
+    });
+
+    // Verify the todo still exists in the database with a deleted flag
+    const dbResult = await db.one(
+      "SELECT is_deleted FROM todo_list WHERE id = $1",
+      [todoId],
+    );
+    assert.strictEqual(dbResult.is_deleted, true);
   });
 });
