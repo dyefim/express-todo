@@ -1,5 +1,6 @@
 const express = require("express");
 const rateLimit = require("express-rate-limit");
+const { nodeEnv } = require("../config/env");
 
 const { validateTaskName, validateDone } = require("../validation/todos");
 const validate = require("../middleware/validate");
@@ -17,7 +18,7 @@ const router = express.Router();
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   limit: 100,
-  skip: (req, res) => process.env.NODE_ENV === "test",
+  skip: () => nodeEnv === "test",
 });
 
 router.use(limiter);

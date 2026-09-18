@@ -5,9 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const app = require("../app");
 const db = require("../db");
-
-const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
-const jwtSecretKey = process.env.JWT_SECRET_KEY;
+const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 
 const mintAccessToken = (userId) =>
   jwt.sign({ data: { id: userId } }, jwtSecretKey, {

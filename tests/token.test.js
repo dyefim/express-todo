@@ -6,6 +6,7 @@ const request = require("supertest");
 
 const app = require("../app");
 const db = require("../db");
+const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `token_test_${Date.now()}`;
@@ -14,7 +15,7 @@ const password = "correct_password";
 let refreshToken;
 let rotatedRefreshToken;
 
-const expiredToken = jwt.sign({ data: { id: 0 } }, process.env.JWT_SECRET_KEY, {
+const expiredToken = jwt.sign({ data: { id: 0 } }, jwtSecretKey, {
   expiresIn: "0s",
 });
 
@@ -22,7 +23,7 @@ const tamperedToken = jwt.sign({ data: { id: 0 } }, "wrong_secret_key", {
   expiresIn: "10m",
 });
 
-const validToken = jwt.sign({ data: { id: 0 } }, process.env.JWT_SECRET_KEY, {
+const validToken = jwt.sign({ data: { id: 0 } }, jwtSecretKey, {
   expiresIn: "10m",
 });
 
@@ -40,28 +41,28 @@ describe("token authentication", () => {
   test("expired token", async () => {
     await request(app)
       .get("/todos")
-      .set("Authorization", `Bearer ${expiredToken}`)
+      .set(tokenHeaderKey, `Bearer ${expiredToken}`)
       .expect(401);
   });
 
   test("malformed token", async () => {
     await request(app)
       .get("/todos")
-      .set("Authorization", `Bearer invalid_token`)
+      .set(tokenHeaderKey, `Bearer invalid_token`)
       .expect(401);
   });
 
   test("tampered token", async () => {
     await request(app)
       .get("/todos")
-      .set("Authorization", `Bearer ${tamperedToken}`)
+      .set(tokenHeaderKey, `Bearer ${tamperedToken}`)
       .expect(401);
   });
 
   test("valid token", async () => {
     await request(app)
       .get("/todos")
-      .set("Authorization", `Bearer ${validToken}`)
+      .set(tokenHeaderKey, `Bearer ${validToken}`)
       .expect(200);
   });
 });

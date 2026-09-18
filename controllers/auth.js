@@ -4,19 +4,14 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
 const db = require("../db");
+const env = require("../config/env");
 
 const router = express.Router();
 
-const tokenHeaderKey = process.env.TOKEN_HEADER_KEY;
-const jwtSecretKey = process.env.JWT_SECRET_KEY;
+const tokenHeaderKey = env.tokenHeaderKey;
+const jwtSecretKey = env.jwtSecretKey;
 
 const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
-
-if (!tokenHeaderKey || !jwtSecretKey) {
-  throw new Error(
-    "JWT_SECRET_KEY or TOKEN_HEADER_KEY is not defined in the environment variables",
-  );
-}
 
 const mintAccessToken = (userId) =>
   jwt.sign({ data: { id: userId } }, jwtSecretKey, {
