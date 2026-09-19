@@ -13,6 +13,14 @@ const validateTaskName = ({ required } = {}) => {
     : chain.optional().withMessage("Task name must be a string");
 };
 
+const validateCategories = body("categories")
+  .optional()
+  .isArray()
+  .withMessage("Categories must be an array of IDs")
+  .bail()
+  .custom((categories) => categories.every((c) => Number.isInteger(c)))
+  .withMessage("Each category must be an integer ID");
+
 const ALLOWED_QUERY_PARAMS = new Set([
   "sort",
   "order",
@@ -66,5 +74,6 @@ const validateQueryParams = (req) => {
 module.exports = {
   validateDone,
   validateTaskName,
+  validateCategories,
   validateQueryParams,
 };

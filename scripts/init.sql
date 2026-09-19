@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS todo_list (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     done BOOLEAN DEFAULT false,
-    categories INTEGER[],
     is_deleted BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
@@ -30,6 +29,13 @@ CREATE TABLE IF NOT EXISTS todo_categories (
     name VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS todo_item_categories (
+    id SERIAL PRIMARY KEY,
+    todo_id INTEGER NOT NULL REFERENCES todo_list(id) ON DELETE CASCADE,
+    category_id INTEGER NOT NULL REFERENCES todo_categories(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 INSERT INTO todo_categories (name) 

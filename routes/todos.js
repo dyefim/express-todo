@@ -2,7 +2,11 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 const { nodeEnv } = require("../config/env");
 
-const { validateTaskName, validateDone } = require("../validation/todos");
+const {
+  validateTaskName,
+  validateDone,
+  validateCategories,
+} = require("../validation/todos");
 const validate = require("../middleware/validate");
 const { verifyToken } = require("../controllers/auth");
 const {
@@ -33,6 +37,7 @@ router.post(
   "/",
   // Validation middleware
   validateTaskName({ required: true }),
+  validateCategories,
   validateDone,
   validate,
   // Route handler
@@ -43,6 +48,7 @@ router.patch(
   "/:id",
   // Validation middleware
   validateTaskName(),
+  validateCategories,
   validateDone,
   validate,
   // Route handler
