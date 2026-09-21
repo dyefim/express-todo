@@ -34,6 +34,13 @@ jobs:
 
       - run: npm ci
 
+      - name: Setup Biome
+        uses: biomejs/setup-biome@v2
+        with:
+          version: latest
+      - name: Run Biome
+        run: biome ci .
+
       - name: Apply schema
         run: PGPASSWORD=password psql -h localhost -U lorem_ipsum -d express_todo_test -f scripts/init.sql
 
