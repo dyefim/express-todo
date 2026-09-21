@@ -12,7 +12,7 @@ const validate = (req, res, next) => {
 
   const queryValidationResult = validateQueryParams(req);
 
-  if (queryValidationResult && queryValidationResult.error) {
+  if (queryValidationResult?.error) {
     return res.status(400).send({ message: queryValidationResult.error });
   }
 

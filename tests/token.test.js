@@ -1,13 +1,11 @@
 const jwt = require("jsonwebtoken");
 const { after, before, describe, test } = require("node:test");
 const assert = require("node:assert/strict");
-const crypto = require("crypto");
 const request = require("supertest");
 
 const app = require("../app");
 const db = require("../db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
-const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `token_test_${Date.now()}`;
 const password = "correct_password";
@@ -69,9 +67,7 @@ describe("token authentication", () => {
 
 describe("refresh token", () => {
   before(async () => {
-    const signUpResponse = await request(app)
-      .post("/auth/sign-up")
-      .send({ username, password });
+    await request(app).post("/auth/sign-up").send({ username, password });
 
     const loginResponse = await request(app)
       .post("/auth/login")

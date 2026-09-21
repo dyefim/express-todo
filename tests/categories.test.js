@@ -94,7 +94,6 @@ describe("categories are protected", () => {
 
   test("user 1 cannot see user 2's categories", async () => {
     const userARequest = await asUser(userA);
-    const userBRequest = await asUser(userB);
 
     const categoryResponse = await createCategory(userB, "School");
 
@@ -106,11 +105,10 @@ describe("categories are protected", () => {
 
 describe("categories can be assigned to todo items", () => {
   let userC;
-  let categoryIds = [];
+  const categoryIds = [];
 
   before(async () => {
     userC = await createUser("User_categories_test_assignment");
-    const userRequest = await asUser(userC);
 
     await Promise.all(
       ["Work", "Urgent", "Documents", "Marketing"].map(async (name) => {
