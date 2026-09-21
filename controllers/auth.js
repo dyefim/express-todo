@@ -131,7 +131,7 @@ const refresh = async (req, res) => {
   );
   await db.none("DELETE FROM refresh_tokens WHERE id = $1", [storedToken.id]);
 
-  res.status(500).json({});
+  res.status(200).json({ token: newAccessToken, refreshToken: newRefreshToken });
 };
 
 const verifyToken = (req, res, next) => {
