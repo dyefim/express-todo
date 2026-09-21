@@ -1,15 +1,22 @@
 const fs = require("fs").promises;
+const path = require("path");
+
+const logFilePath = path.join(__dirname, "..", "logs", "operations.log");
+const logDirectoryReady = fs.mkdir(path.dirname(logFilePath), {
+  recursive: true,
+});
 
 const logger = (req, res, next) => {
-  fs.appendFile(
-    "logs/operations.log",
-    `${req.method.padEnd(6)} ${req.url} ${new Date().toISOString()}\n`,
-    (err) => {
-      if (err) {
-        console.error("Error writing to log file", err);
-      }
-    },
-  );
+  void logDirectoryReady
+    .then(() =>
+      fs.appendFile(
+        logFilePath,
+        `${req.method.padEnd(6)} ${req.url} ${new Date().toISOString()}\n`,
+      ),
+    )
+    .catch((err) => {
+      console.error("Error writing to log file", err);
+    });
 
   next();
 };
