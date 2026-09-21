@@ -37,11 +37,3 @@ CREATE TABLE IF NOT EXISTS todo_item_categories (
     category_id INTEGER NOT NULL REFERENCES todo_categories(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
-INSERT INTO todo_categories (name) 
-VALUES 
-    ('Low'),
-    ('Medium'),
-    ('High'),
-    ('Urgent'),
-ON CONFLICT DO NOTHING;
