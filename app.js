@@ -14,6 +14,7 @@ app.use(logger);
 app.use(express.json());
 
 app.use("/static", express.static(path.join(__dirname, "files")));
+app.use("/health", require("./routes/health"));
 app.use("/todos", require("./routes/todos"));
 app.use("/categories", require("./routes/categories"));
 app.use("/auth", require("./routes/auth"));
