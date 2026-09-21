@@ -1,6 +1,11 @@
 "use strict";
 
-process.loadEnvFile();
+// Optional: env vars may already be supplied by --env-file, CI, or the platform
+try {
+  process.loadEnvFile();
+} catch (err) {
+  if (err.code !== "ENOENT") throw err;
+}
 
 const required = [
   "POSTGRES_USER",
