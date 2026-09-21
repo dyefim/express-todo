@@ -1,12 +1,9 @@
-const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const crypto = require("crypto");
+const crypto = require("node:crypto");
 
 const db = require("../db");
 const env = require("../config/env");
-
-const router = express.Router();
 
 const tokenHeaderKey = env.tokenHeaderKey;
 const jwtSecretKey = env.jwtSecretKey;
@@ -146,7 +143,7 @@ const verifyToken = (req, res, next) => {
 
     req.user = jwt.verify(token, jwtSecretKey).data;
     next();
-  } catch (err) {
+  } catch (_err) {
     res.status(401).json({ valid: false, error: "Invalid or expired token" });
   }
 };

@@ -11,7 +11,6 @@ const password = "correct_login_password";
 
 let userId;
 let refreshToken;
-let rotatedRefreshToken;
 
 before(async () => {
   const passwordHash = await bcrypt.hash(password, 10);
