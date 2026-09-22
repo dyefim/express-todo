@@ -52,10 +52,10 @@ const createCategory = async (user, categoryName) => {
 
 after(async () => {
   await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [createdUsers]);
-  await db.none("DELETE FROM todo_categories WHERE id = ANY($1::int[])", [
+  await db.none("DELETE FROM categories WHERE id = ANY($1::int[])", [
     createdCategoryIds,
   ]);
-  await db.none("DELETE FROM todo_list WHERE id = ANY($1::int[])", [
+  await db.none("DELETE FROM tasks WHERE id = ANY($1::int[])", [
     createdTodoIds,
   ]);
   await db.$pool.end();

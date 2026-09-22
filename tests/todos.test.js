@@ -87,7 +87,7 @@ describe("todos can be sorted", () => {
   });
 
   afterEach(async () => {
-    await db.none("DELETE FROM todo_list WHERE created_by = $1", [userA.id]);
+    await db.none("DELETE FROM tasks WHERE created_by = $1", [userA.id]);
   });
 
   test("by title", async () => {
@@ -230,7 +230,7 @@ describe("todos are soft deleted", () => {
   });
 
   after(async () => {
-    await db.none("DELETE FROM todo_list WHERE id = $1", [todoId]);
+    await db.none("DELETE FROM tasks WHERE id = $1", [todoId]);
   });
 
   test("soft delete a todo", async () => {
@@ -252,7 +252,7 @@ describe("todos are soft deleted", () => {
 
     // Verify the todo still exists in the database with a deleted flag
     const dbResult = await db.one(
-      "SELECT is_deleted FROM todo_list WHERE id = $1",
+      "SELECT is_deleted FROM tasks WHERE id = $1",
       [todoId],
     );
     assert.strictEqual(dbResult.is_deleted, true);

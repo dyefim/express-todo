@@ -3,7 +3,7 @@ const db = require("../db");
 const getCategories = async (req, res, next) => {
   try {
     const categories = await db.any(
-      "SELECT * FROM todo_categories WHERE created_by = $1 ORDER BY created_at",
+      "SELECT * FROM categories WHERE created_by = $1 ORDER BY created_at",
       [req.user.id],
     );
 
@@ -20,7 +20,7 @@ const getCategoryById = async (req, res, next) => {
 
   try {
     const category = await db.oneOrNone(
-      "SELECT * FROM todo_categories WHERE id = $1 AND created_by = $2",
+      "SELECT * FROM categories WHERE id = $1 AND created_by = $2",
       [id, req.user.id],
     );
 
@@ -39,7 +39,7 @@ const createCategory = async (req, res, next) => {
 
   try {
     const category = await db.one(
-      "INSERT INTO todo_categories(name, created_by) VALUES($1, $2) RETURNING id, name, created_by",
+      "INSERT INTO categories(name, created_by) VALUES($1, $2) RETURNING id, name, created_by",
       [name, req.user.id],
     );
 
@@ -56,7 +56,7 @@ const updateCategory = async (req, res, next) => {
   try {
     const updatedCategory = await db.oneOrNone(
       `
-      UPDATE todo_categories
+      UPDATE categories
       SET name = COALESCE($1, name)
       WHERE id = $2 AND created_by = $3;
     `,
@@ -78,7 +78,7 @@ const deleteCategory = async (req, res, next) => {
 
   try {
     const result = await db.result(
-      "DELETE FROM todo_categories WHERE id = $1 AND created_by = $2",
+      "DELETE FROM categories WHERE id = $1 AND created_by = $2",
       [id, req.user.id],
     );
 
