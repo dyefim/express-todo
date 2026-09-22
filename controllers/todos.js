@@ -9,9 +9,9 @@ const todosWithCategoriesQuery = `
 `;
 
 const todoCategoriesJoin = `
-  FROM todo_list t 
-  LEFT JOIN todo_item_categories tc ON t.id = tc.todo_id 
-  LEFT JOIN todo_categories c ON tc.category_id = c.id  
+  FROM tasks t 
+  LEFT JOIN task_categories tc ON t.id = tc.task_id 
+  LEFT JOIN categories c ON tc.category_id = c.id  
 `;
 
 const getTodos = async (req, res, next) => {
@@ -28,7 +28,7 @@ const getTodos = async (req, res, next) => {
     const params = [req.user.id];
 
     const totalQuery = [
-      `SELECT COUNT(*) AS count FROM todo_list 
+      `SELECT COUNT(*) AS count FROM tasks 
         WHERE created_by = $1 AND is_deleted = false`,
     ];
 
@@ -100,15 +100,15 @@ const createTodo = async (req, res, next) => {
   try {
     const todo = await db.tx(async (t) => {
       const todoResult = await t.one(
-        `INSERT INTO todo_list(title, done, created_by) 
+        `INSERT INTO tasks(title, done, created_by) 
             VALUES($1, $2, $3) 
             RETURNING id, title, done, created_by`,
         [title, done === true, req.user.id],
       );
 
       await t.none(
-        `INSERT INTO todo_item_categories(todo_id, category_id)
-            SELECT $1, id FROM todo_categories WHERE id = ANY($2::int[])`,
+        `INSERT INTO task_categories(task_id, category_id)
+            SELECT $1, id FROM categories WHERE id = ANY($2::int[])`,
         [todoResult.id, categories || []],
       );
 
@@ -135,7 +135,7 @@ const updateTodo = async (req, res, next) => {
 
   try {
     const updatedTodo = await db.oneOrNone(
-      `UPDATE todo_list
+      `UPDATE tasks
         SET title = COALESCE($1, title),
             done = COALESCE($2, done)
         WHERE id = $3 AND created_by = $4
@@ -150,14 +150,12 @@ const updateTodo = async (req, res, next) => {
     if (Array.isArray(categories)) {
       await db.tx(async (t) => {
         // remove existing categories
-        await t.none(`DELETE FROM todo_item_categories WHERE todo_id = $1`, [
-          id,
-        ]);
+        await t.none(`DELETE FROM task_categories WHERE task_id = $1`, [id]);
 
         // add new categories
         await t.none(
-          `INSERT INTO todo_item_categories(todo_id, category_id)
-          SELECT $1, id FROM todo_categories WHERE id = ANY($2::int[])`,
+          `INSERT INTO task_categories(task_id, category_id)
+          SELECT $1, id FROM categories WHERE id = ANY($2::int[])`,
           [id, categories || []],
         );
       });
@@ -174,7 +172,7 @@ const deleteTodo = async (req, res, next) => {
 
   try {
     const result = await db.oneOrNone(
-      "UPDATE todo_list SET is_deleted = true WHERE id = $1 AND created_by = $2 RETURNING id",
+      "UPDATE tasks SET is_deleted = true WHERE id = $1 AND created_by = $2 RETURNING id",
       [id, req.user.id],
     );
 

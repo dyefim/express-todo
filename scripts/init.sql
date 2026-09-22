@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
 
-CREATE TABLE IF NOT EXISTS todo_list (
+CREATE TABLE IF NOT EXISTS tasks (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     done BOOLEAN DEFAULT false,
@@ -24,16 +24,16 @@ CREATE TABLE IF NOT EXISTS todo_list (
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS todo_categories (
+CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS todo_item_categories (
+CREATE TABLE IF NOT EXISTS task_categories (
     id SERIAL PRIMARY KEY,
-    todo_id INTEGER NOT NULL REFERENCES todo_list(id) ON DELETE CASCADE,
-    category_id INTEGER NOT NULL REFERENCES todo_categories(id) ON DELETE CASCADE,
+    task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+    category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
