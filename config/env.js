@@ -25,7 +25,7 @@ if (missing.length > 0) {
 
 module.exports = {
   nodeEnv: process.env.NODE_ENV || "development",
-  dbHost: "localhost",
+  dbHost: process.env.DB_HOST || "localhost",
   dbPort: Number(process.env.DB_PORT) || 5432,
   dbUser: process.env.POSTGRES_USER,
   dbPassword: process.env.POSTGRES_PASSWORD,

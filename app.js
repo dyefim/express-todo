@@ -1,6 +1,9 @@
 const express = require("express");
 const path = require("node:path");
 const fs = require("node:fs");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
+const { nodeEnv } = require("./config/env");
 
 const logger = require("./middleware/logger");
 const errorHandler = require("./middleware/error");
@@ -14,6 +17,11 @@ app.use(logger);
 app.use(express.json());
 
 app.use("/static", express.static(path.join(__dirname, "files")));
+
+if (nodeEnv !== "production") {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
+
 app.use("/health", require("./routes/health"));
 app.use("/todos", require("./routes/todos"));
 app.use("/categories", require("./routes/categories"));
