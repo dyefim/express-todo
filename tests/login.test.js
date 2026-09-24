@@ -3,7 +3,7 @@ const { after, before, describe, test } = require("node:test");
 const request = require("supertest");
 
 const app = require("../app");
-const db = require("../db");
+const db = require("../config/db");
 const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `login_test_${Date.now()}`;

@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const crypto = require("node:crypto");
 
-const db = require("../db");
+const db = require("../config/db");
 const env = require("../config/env");
 
 const tokenHeaderKey = env.tokenHeaderKey;

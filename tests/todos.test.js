@@ -4,7 +4,7 @@ const assert = require("node:assert/strict");
 const jwt = require("jsonwebtoken");
 
 const app = require("../app");
-const db = require("../db");
+const db = require("../config/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 
 const mintAccessToken = (userId) =>
