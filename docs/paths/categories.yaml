@@ -85,11 +85,7 @@
         content:
           application/json:
             schema:
-              # $ref: '#/components/schemas/Category' # TODO update API response for patch
-              type: object
-              properties:
-                message:
-                  type: string
+              $ref: '#/components/schemas/Category'
       404:
         description: Category not found.
 

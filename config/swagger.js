@@ -28,6 +28,21 @@ const swaggerSpec = swaggerJSDoc({
             created_by: { type: "integer" },
           },
         },
+        Todo: {
+          type: "object",
+          properties: {
+            id: { type: "integer" },
+            title: { type: "string" },
+            done: { type: "boolean" },
+            created_at: { type: "string", format: "date-time" },
+            created_by: { type: "integer" },
+            is_deleted: { type: "boolean" },
+            categories: {
+              type: "array",
+              items: { type: "string" },
+            },
+          },
+        },
         SignUpRequest: {
           type: "object",
           required: ["username", "password"],

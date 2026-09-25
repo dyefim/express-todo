@@ -39,7 +39,7 @@ const createCategory = async (req, res, next) => {
 
   try {
     const category = await db.one(
-      "INSERT INTO categories(name, created_by) VALUES($1, $2) RETURNING id, name, created_by",
+      "INSERT INTO categories(name, created_by) VALUES($1, $2) RETURNING id, name, created_at, created_by",
       [name, req.user.id],
     );
 
@@ -58,16 +58,18 @@ const updateCategory = async (req, res, next) => {
       `
       UPDATE categories
       SET name = COALESCE($1, name)
-      WHERE id = $2 AND created_by = $3;
+      WHERE id = $2 AND created_by = $3
+      RETURNING id, name, created_at, created_by;
     `,
       [name, id, req.user.id],
     );
 
-    if (!updatedCategory) {
+    if (updatedCategory) {
+      return res.status(200).json(updatedCategory);
+    } else {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    res.status(200).json({ message: "Category updated successfully" });
   } catch (error) {
     next(error);
   }
