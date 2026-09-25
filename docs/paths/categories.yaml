@@ -1,0 +1,112 @@
+/categories:
+  get:
+    summary: Get all categories
+    tags:
+      - categories
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Category'
+  post:
+    summary: Create a new category
+    tags:
+      - categories
+    security:
+      - bearerAuth: []
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: ["name"]
+            properties:
+              name:
+                type: string
+    responses:
+      201:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+
+/categories/{id}:
+  get:
+    summary: Get a category by ID
+    tags:
+      - categories
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      404:
+        description: Category not found.
+
+  patch:
+    summary: Update a category by ID
+    tags:
+      - categories
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              # $ref: '#/components/schemas/Category' # TODO update API response for patch
+              type: object
+              properties:
+                message:
+                  type: string
+      404:
+        description: Category not found.
+
+  delete:
+    summary: Delete a category by ID
+    tags:
+      - categories
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      204:
+        description: Category deleted successfully.
+      404:
+        description: Category not found.

@@ -9,6 +9,7 @@ const swaggerSpec = swaggerJSDoc({
       title: "Express todo API",
       version: "1.0.0",
     },
+    tags: [{ name: "auth" }, { name: "categories" }, { name: "todos" }],
     components: {
       schemas: {
         User: {
@@ -16,6 +17,15 @@ const swaggerSpec = swaggerJSDoc({
           properties: {
             id: { type: "integer" },
             username: { type: "string" },
+          },
+        },
+        Category: {
+          type: "object",
+          properties: {
+            id: { type: "integer" },
+            name: { type: "string" },
+            created_at: { type: "string", format: "date-time" },
+            created_by: { type: "integer" },
           },
         },
         SignUpRequest: {
@@ -52,7 +62,7 @@ const swaggerSpec = swaggerJSDoc({
     },
   },
   // resolved relative to process.cwd(), so this works regardless of which file requires it
-  apis: ["./routes/*.js", "./docs/paths/*.yaml"]
+  apis: ["./routes/*.js", "./docs/paths/*.yaml"],
 });
 
 module.exports = swaggerSpec;
