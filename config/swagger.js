@@ -6,7 +6,7 @@ const swaggerSpec = swaggerJSDoc({
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Hello World",
+      title: "Express todo API",
       version: "1.0.0",
     },
     components: {
@@ -52,7 +52,7 @@ const swaggerSpec = swaggerJSDoc({
     },
   },
   // resolved relative to process.cwd(), so this works regardless of which file requires it
-  apis: ["./routes/*.js"],
+  apis: ["./routes/*.js", "./docs/paths/*.yaml"]
 });
 
 module.exports = swaggerSpec;
