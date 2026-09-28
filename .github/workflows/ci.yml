@@ -35,6 +35,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npm run typecheck
+
       - name: Setup Biome
         uses: biomejs/setup-biome@v2
         with:

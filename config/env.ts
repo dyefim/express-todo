@@ -1,9 +1,8 @@
-"use strict";
-
 // Optional: env vars may already be supplied by --env-file, CI, or the platform
 try {
   process.loadEnvFile();
-} catch (err) {
+  // biome-ignore lint/suspicious/noExplicitAny: Catching error as any type to handle missing env file
+} catch (err: any) {
   if (err.code !== "ENOENT") throw err;
 }
 
