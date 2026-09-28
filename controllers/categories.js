@@ -69,7 +69,6 @@ const updateCategory = async (req, res, next) => {
     } else {
       return res.status(404).json({ message: "Category not found" });
     }
-
   } catch (error) {
     next(error);
   }
