@@ -7,11 +7,12 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "npm run docker:up && nodemon app.js",
+    "start": "tsx app.js",
+    "dev": "npm run docker:up && tsx watch app.js",
+    "typecheck": "tsc --noEmit",
     "lint": "biome lint",
     "lint:fix": "biome lint --write",
-    "test": "node --env-file=.env.test --test",
+    "test": "tsx --env-file=.env.test --test",
     "init:db": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -f /docker-entrypoint-initdb.d/init.sql'",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
@@ -26,11 +27,15 @@
     "jsonwebtoken": "^9.0.3",
     "pg-promise": "^12.6.2",
     "swagger-jsdoc": "^6.3.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
     "node-pg-migrate": "^9.0.0",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "typescript": "^7.0.2"
   }
 }
