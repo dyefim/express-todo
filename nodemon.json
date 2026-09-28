@@ -1,0 +1,4 @@
+{
+  "ext": "js,json,yaml,yml",
+  "ignore": ["node_modules", "logs"]
+}

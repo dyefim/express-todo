@@ -1,0 +1,163 @@
+/todos:
+  get:
+    summary: Get all todos
+    tags:
+      - todos
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: sort
+        in: query
+        schema:
+          type: string
+          enum: [title, created_at, completed]
+      - name: order
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+      - name: search
+        in: query
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: size
+        in: query
+        schema:
+          type: integer
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Todo'
+                page:
+                  type: object
+                  properties:
+                    size:
+                      type: integer
+                    totalElements:
+                      type: integer
+                    totalPages:
+                      type: integer
+                    number:
+                      type: integer
+      400:
+        $ref: '#/components/responses/BadRequest'
+  post:
+    summary: Create a new todo
+    tags:
+      - todos
+    security:
+      - bearerAuth: []
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            required: ["title"]
+            properties:
+              title:
+                type: string
+              done:
+                type: boolean
+              categories:
+                type: array
+                items:
+                  type: integer
+    responses:
+      201:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Todo'
+      400:
+        $ref: '#/components/responses/BadRequest'
+
+/todos/{id}:
+  get:
+    summary: Get a todo by ID
+    tags:
+      - todos
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Todo'
+      404:
+        description: Todo not found.
+
+  patch:
+    summary: Update a todo by ID
+    tags:
+      - todos
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              done:
+                type: boolean
+              categories:
+                type: array
+                items:
+                  type: integer
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+      400:
+        $ref: '#/components/responses/BadRequest'
+      404:
+        description: Todo not found.
+
+  delete:
+    summary: Delete a todo by ID
+    tags:
+      - todos
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    responses:
+      204:
+        description: Todo deleted successfully.
+      404:
+        description: Todo not found.

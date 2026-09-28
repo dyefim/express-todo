@@ -2,7 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 
 const { nodeEnv } = require("../config/env");
-const db = require("../db");
+const db = require("../config/db");
 
 const router = express.Router();
 

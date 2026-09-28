@@ -24,7 +24,9 @@
     "express-rate-limit": "^8.7.0",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
-    "pg-promise": "^12.6.2"
+    "pg-promise": "^12.6.2",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
