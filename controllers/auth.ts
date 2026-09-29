@@ -1,16 +1,16 @@
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const crypto = require("node:crypto");
-
-const db = require("../config/db");
-const env = require("../config/env");
+import crypto from "node:crypto";
+import bcrypt from "bcryptjs";
+import type { RequestHandler } from "express";
+import jwt from "jsonwebtoken";
+import db from "../config/db";
+import env from "../config/env";
 
 const tokenHeaderKey = env.tokenHeaderKey;
 const jwtSecretKey = env.jwtSecretKey;
 
 const usernameRegex = /^[a-zA-Z0-9_]{3,30}$/;
 
-const mintAccessToken = (userId) =>
+const mintAccessToken = (userId: number) =>
   jwt.sign({ data: { id: userId } }, jwtSecretKey, {
     expiresIn: "5m",
   });
@@ -20,7 +20,7 @@ const mintRefreshToken = () => crypto.randomBytes(64).toString("hex");
 const getRefreshTokenExpirationDate = () =>
   new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-const signUp = async (req, res, next) => {
+const signUp: RequestHandler = async (req, res, next) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -57,7 +57,7 @@ const signUp = async (req, res, next) => {
       .status(201)
       .json({ message: "User registered successfully", user });
   } catch (err) {
-    if (err.code === "23505") {
+    if ((err as { code?: string }).code === "23505") {
       // Handle unique constraint violation before the middleware does to avoid generic error response
       return res.status(409).json({ error: "Username already exists" });
     }
@@ -66,7 +66,7 @@ const signUp = async (req, res, next) => {
   }
 };
 
-const login = async (req, res) => {
+const login: RequestHandler = async (req, res) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -104,7 +104,7 @@ const login = async (req, res) => {
   res.json({ token, refreshToken });
 };
 
-const refresh = async (req, res) => {
+const refresh: RequestHandler = async (req, res) => {
   const { refreshToken } = req.body || {};
 
   if (!refreshToken) {
@@ -134,14 +134,23 @@ const refresh = async (req, res) => {
   res.json({ token: newAccessToken, refreshToken: newRefreshToken });
 };
 
-const verifyToken = (req, res, next) => {
+const verifyToken: RequestHandler = (req, res, next) => {
   try {
     const authHeader = req.header(tokenHeaderKey);
+
+    if (!authHeader) {
+      return res
+        .status(401)
+        .json({ valid: false, error: "Missing authorization header" });
+    }
+
     const token = authHeader?.startsWith("Bearer ")
       ? authHeader.slice(7)
       : authHeader;
 
-    req.user = jwt.verify(token, jwtSecretKey).data;
+    const decoded = jwt.verify(token, jwtSecretKey) as { data: AuthUser };
+
+    req.user = decoded.data;
     next();
   } catch (_err) {
     res.status(401).json({ valid: false, error: "Invalid or expired token" });

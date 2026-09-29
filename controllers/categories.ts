@@ -1,10 +1,11 @@
-const db = require("../config/db");
+import type { RequestHandler } from "express";
+import db from "../config/db";
 
-const getCategories = async (req, res, next) => {
+const getCategories: RequestHandler = async (req, res, next) => {
   try {
     const categories = await db.any(
       "SELECT * FROM categories WHERE created_by = $1 ORDER BY created_at",
-      [req.user.id],
+      [req.user?.id],
     );
 
     return res.json({
@@ -15,13 +16,13 @@ const getCategories = async (req, res, next) => {
   }
 };
 
-const getCategoryById = async (req, res, next) => {
+const getCategoryById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
     const category = await db.oneOrNone(
       "SELECT * FROM categories WHERE id = $1 AND created_by = $2",
-      [id, req.user.id],
+      [id, req.user?.id],
     );
 
     if (category) {
@@ -34,13 +35,13 @@ const getCategoryById = async (req, res, next) => {
   }
 };
 
-const createCategory = async (req, res, next) => {
+const createCategory: RequestHandler = async (req, res, next) => {
   const { name } = req.body;
 
   try {
     const category = await db.one(
       "INSERT INTO categories(name, created_by) VALUES($1, $2) RETURNING id, name, created_at, created_by",
-      [name, req.user.id],
+      [name, req.user?.id],
     );
 
     res.status(201).json(category);
@@ -49,7 +50,7 @@ const createCategory = async (req, res, next) => {
   }
 };
 
-const updateCategory = async (req, res, next) => {
+const updateCategory: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -61,7 +62,7 @@ const updateCategory = async (req, res, next) => {
       WHERE id = $2 AND created_by = $3
       RETURNING id, name, created_at, created_by;
     `,
-      [name, id, req.user.id],
+      [name, id, req.user?.id],
     );
 
     if (updatedCategory) {
@@ -74,13 +75,13 @@ const updateCategory = async (req, res, next) => {
   }
 };
 
-const deleteCategory = async (req, res, next) => {
+const deleteCategory: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
     const result = await db.result(
       "DELETE FROM categories WHERE id = $1 AND created_by = $2",
-      [id, req.user.id],
+      [id, req.user?.id],
     );
 
     if (result.rowCount === 0) {
@@ -93,7 +94,7 @@ const deleteCategory = async (req, res, next) => {
   }
 };
 
-module.exports = {
+export = {
   getCategories,
   getCategoryById,
   createCategory,

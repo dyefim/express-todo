@@ -1,9 +1,8 @@
 // Optional: env vars may already be supplied by --env-file, CI, or the platform
 try {
   process.loadEnvFile();
-  // biome-ignore lint/suspicious/noExplicitAny: Catching error as any type to handle missing env file
-} catch (err: any) {
-  if (err.code !== "ENOENT") throw err;
+} catch (err) {
+  if ((err as { code?: string }).code !== "ENOENT") throw err;
 }
 
 const required = [
@@ -22,7 +21,18 @@ if (missing.length > 0) {
   );
 }
 
-module.exports = {
+interface EnvPairs {
+  nodeEnv: string;
+  dbHost: string;
+  dbPort: number;
+  dbUser: string;
+  dbPassword: string;
+  dbName: string;
+  jwtSecretKey: string;
+  tokenHeaderKey: string;
+}
+
+export = {
   nodeEnv: process.env.NODE_ENV || "development",
   dbHost: process.env.DB_HOST || "localhost",
   dbPort: Number(process.env.DB_PORT) || 5432,
@@ -31,4 +41,4 @@ module.exports = {
   dbName: process.env.POSTGRES_DB,
   jwtSecretKey: process.env.JWT_SECRET_KEY,
   tokenHeaderKey: process.env.TOKEN_HEADER_KEY,
-};
+} as EnvPairs;
