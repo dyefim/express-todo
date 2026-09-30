@@ -1,5 +1,6 @@
 import type { RequestHandler } from "express";
 import db from "../config/db";
+import { parseIntParam, parseStringParam } from "../utils/parse";
 
 const sortFieldMap: Record<string, string> = {
   completed: "done",
@@ -14,16 +15,6 @@ const todoCategoriesJoin = `
   LEFT JOIN task_categories tc ON t.id = tc.task_id 
   LEFT JOIN categories c ON tc.category_id = c.id  
 `;
-
-// TODO: consider using a more robust validation and parsing library
-const parseIntParam = (value: unknown, fallback: number) => {
-  const parsed = typeof value === "string" ? parseInt(value, 10) : NaN;
-  return Number.isNaN(parsed) ? fallback : parsed;
-};
-
-const parseStringParam = (value: unknown, fallback: string | undefined) => {
-  return typeof value === "string" ? value : fallback;
-};
 
 export const getTodos: RequestHandler = async (req, res, next) => {
   try {

@@ -1,11 +1,13 @@
-const { body } = require("express-validator");
+import type { Request } from "express";
+import { body } from "express-validator";
+import { parseStringParam } from "../utils/parse";
 
-const validateDone = body("done")
+export const validateDone = body("done")
   .optional()
   .isBoolean()
   .withMessage("Done must be a boolean");
 
-const validateTaskName = ({ required } = {}) => {
+export const validateTaskName = ({ required }: { required?: boolean } = {}) => {
   const chain = body("title").isString().escape();
 
   return required
@@ -13,12 +15,12 @@ const validateTaskName = ({ required } = {}) => {
     : chain.optional().withMessage("Task name must be a string");
 };
 
-const validateCategories = body("categories")
+export const validateCategories = body("categories")
   .optional()
   .isArray()
   .withMessage("Categories must be an array of IDs")
   .bail()
-  .custom((categories) => categories.every((c) => Number.isInteger(c)))
+  .custom((categories) => categories.every((c: unknown) => Number.isInteger(c)))
   .withMessage("Each category must be an integer ID");
 
 const ALLOWED_QUERY_PARAMS = new Set([
@@ -31,7 +33,7 @@ const ALLOWED_QUERY_PARAMS = new Set([
 const SORT_FIELDS = new Set(["title", "created_at", "completed"]);
 const ORDER_VALUES = new Set(["asc", "desc"]);
 
-const validateQueryParams = (req) => {
+export const validateQueryParams = (req: Request) => {
   const { query } = req;
 
   const hasUnknownQueryParam = Object.keys(query).some(
@@ -54,7 +56,9 @@ const validateQueryParams = (req) => {
     };
   }
 
-  const hasInvalidSortField = query.sort && !SORT_FIELDS.has(query.sort);
+  const sort = parseStringParam(query.sort, undefined);
+
+  const hasInvalidSortField = sort && !SORT_FIELDS.has(sort);
 
   if (hasInvalidSortField) {
     return {
@@ -62,18 +66,13 @@ const validateQueryParams = (req) => {
     };
   }
 
-  const hasInvalidOrderValue = query.order && !ORDER_VALUES.has(query.order);
+  const order = parseStringParam(query.order, undefined);
+
+  const hasInvalidOrderValue = order && !ORDER_VALUES.has(order);
 
   if (hasInvalidOrderValue) {
     return {
       error: `Invalid order parameter. Allowed order values are: ${Array.from(ORDER_VALUES).join(", ")}`,
     };
   }
-};
-
-module.exports = {
-  validateDone,
-  validateTaskName,
-  validateCategories,
-  validateQueryParams,
 };
