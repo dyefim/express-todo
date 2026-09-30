@@ -22,4 +22,4 @@ const logger = (req: Request, _res: Response, next: NextFunction) => {
   next();
 };
 
-export = logger;
+export default logger;

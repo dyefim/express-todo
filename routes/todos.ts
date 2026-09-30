@@ -16,7 +16,6 @@ import {
   validateTaskName,
 } from "../validation/todos";
 
-
 const router = express.Router();
 
 const limiter = rateLimit({
@@ -57,4 +56,4 @@ router.patch(
 
 router.delete("/:id", deleteTodo);
 
-export = router;
+export default router;

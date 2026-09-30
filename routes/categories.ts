@@ -46,4 +46,4 @@ router.patch(
 
 router.delete("/:id", deleteCategory);
 
-export = router;
+export default router;

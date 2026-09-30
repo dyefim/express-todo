@@ -23,4 +23,4 @@ router.get("/verify", verifyToken, (req, res) =>
   res.status(200).json({ valid: true, data: req.user }),
 );
 
-export = router;
+export default router;

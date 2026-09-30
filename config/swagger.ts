@@ -78,4 +78,4 @@ const swaggerSpec = swaggerJSDoc({
   apis: ["./routes/*.js", "./docs/paths/*.yaml"],
 });
 
-export = swaggerSpec;
+export default swaggerSpec;
