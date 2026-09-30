@@ -1,7 +1,7 @@
 import type { RequestHandler } from "express";
 import db from "../config/db";
 
-const getCategories: RequestHandler = async (req, res, next) => {
+export const getCategories: RequestHandler = async (req, res, next) => {
   try {
     const categories = await db.any(
       "SELECT * FROM categories WHERE created_by = $1 ORDER BY created_at",
@@ -16,7 +16,7 @@ const getCategories: RequestHandler = async (req, res, next) => {
   }
 };
 
-const getCategoryById: RequestHandler = async (req, res, next) => {
+export const getCategoryById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -35,7 +35,7 @@ const getCategoryById: RequestHandler = async (req, res, next) => {
   }
 };
 
-const createCategory: RequestHandler = async (req, res, next) => {
+export const createCategory: RequestHandler = async (req, res, next) => {
   const { name } = req.body;
 
   try {
@@ -50,7 +50,7 @@ const createCategory: RequestHandler = async (req, res, next) => {
   }
 };
 
-const updateCategory: RequestHandler = async (req, res, next) => {
+export const updateCategory: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
@@ -75,7 +75,7 @@ const updateCategory: RequestHandler = async (req, res, next) => {
   }
 };
 
-const deleteCategory: RequestHandler = async (req, res, next) => {
+export const deleteCategory: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -92,12 +92,4 @@ const deleteCategory: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-export = {
-  getCategories,
-  getCategoryById,
-  createCategory,
-  updateCategory,
-  deleteCategory,
 };

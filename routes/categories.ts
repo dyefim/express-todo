@@ -1,24 +1,23 @@
-const express = require("express");
-const rateLimit = require("express-rate-limit");
-
-const { validateCategoryName } = require("../validation/categories");
-const validate = require("../middleware/validate");
-const { verifyToken } = require("../controllers/auth");
-const {
+import express from "express";
+import rateLimit from "express-rate-limit";
+import env from "../config/env";
+import { verifyToken } from "../controllers/auth";
+import {
+  createCategory,
+  deleteCategory,
   getCategories,
   getCategoryById,
-  createCategory,
   updateCategory,
-  deleteCategory,
-} = require("../controllers/categories");
-const { nodeEnv } = require("../config/env");
+} from "../controllers/categories";
+import validate from "../middleware/validate";
+import { validateCategoryName } from "../validation/categories";
 
 const router = express.Router();
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   limit: 100,
-  skip: () => nodeEnv === "test",
+  skip: () => env.nodeEnv === "test",
 });
 
 router.use(limiter);
@@ -47,4 +46,4 @@ router.patch(
 
 router.delete("/:id", deleteCategory);
 
-module.exports = router;
+export = router;

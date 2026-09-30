@@ -1,15 +1,14 @@
-const express = require("express");
-const rateLimit = require("express-rate-limit");
-
-const { signUp, login, refresh, verifyToken } = require("../controllers/auth");
-const { nodeEnv } = require("../config/env");
+import express from "express";
+import rateLimit from "express-rate-limit";
+import env from "../config/env";
+import { login, refresh, signUp, verifyToken } from "../controllers/auth";
 
 const router = express.Router();
 
 const limiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   limit: 10,
-  skip: () => nodeEnv === "test",
+  skip: () => env.nodeEnv === "test",
 });
 
 router.use(limiter);
@@ -24,4 +23,4 @@ router.get("/verify", verifyToken, (req, res) =>
   res.status(200).json({ valid: true, data: req.user }),
 );
 
-module.exports = router;
+export = router;

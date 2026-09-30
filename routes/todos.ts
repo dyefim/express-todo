@@ -1,28 +1,28 @@
-const express = require("express");
-const rateLimit = require("express-rate-limit");
-const { nodeEnv } = require("../config/env");
-
-const {
-  validateTaskName,
-  validateDone,
-  validateCategories,
-} = require("../validation/todos");
-const validate = require("../middleware/validate");
-const { verifyToken } = require("../controllers/auth");
-const {
-  getTodos,
-  getTodoById,
+import express from "express";
+import rateLimit from "express-rate-limit";
+import env from "../config/env";
+import { verifyToken } from "../controllers/auth";
+import {
   createTodo,
-  updateTodo,
   deleteTodo,
-} = require("../controllers/todos");
+  getTodoById,
+  getTodos,
+  updateTodo,
+} from "../controllers/todos";
+import validate from "../middleware/validate";
+import {
+  validateCategories,
+  validateDone,
+  validateTaskName,
+} from "../validation/todos";
+
 
 const router = express.Router();
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   limit: 100,
-  skip: () => nodeEnv === "test",
+  skip: () => env.nodeEnv === "test",
 });
 
 router.use(limiter);
@@ -57,4 +57,4 @@ router.patch(
 
 router.delete("/:id", deleteTodo);
 
-module.exports = router;
+export = router;

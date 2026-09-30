@@ -15,12 +15,12 @@ const mintAccessToken = (userId: number) =>
     expiresIn: "5m",
   });
 
-const mintRefreshToken = () => crypto.randomBytes(64).toString("hex");
+export const mintRefreshToken = () => crypto.randomBytes(64).toString("hex");
 
 const getRefreshTokenExpirationDate = () =>
   new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-const signUp: RequestHandler = async (req, res, next) => {
+export const signUp: RequestHandler = async (req, res, next) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -66,7 +66,7 @@ const signUp: RequestHandler = async (req, res, next) => {
   }
 };
 
-const login: RequestHandler = async (req, res) => {
+export const login: RequestHandler = async (req, res) => {
   const { username, password } = req.body || {};
 
   if (!username || !password) {
@@ -104,7 +104,7 @@ const login: RequestHandler = async (req, res) => {
   res.json({ token, refreshToken });
 };
 
-const refresh: RequestHandler = async (req, res) => {
+export const refresh: RequestHandler = async (req, res) => {
   const { refreshToken } = req.body || {};
 
   if (!refreshToken) {
@@ -134,7 +134,7 @@ const refresh: RequestHandler = async (req, res) => {
   res.json({ token: newAccessToken, refreshToken: newRefreshToken });
 };
 
-const verifyToken: RequestHandler = (req, res, next) => {
+export const verifyToken: RequestHandler = (req, res, next) => {
   try {
     const authHeader = req.header(tokenHeaderKey);
 
@@ -155,12 +155,4 @@ const verifyToken: RequestHandler = (req, res, next) => {
   } catch (_err) {
     res.status(401).json({ valid: false, error: "Invalid or expired token" });
   }
-};
-
-module.exports = {
-  signUp,
-  login,
-  refresh,
-  verifyToken,
-  mintRefreshToken,
 };

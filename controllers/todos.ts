@@ -25,7 +25,7 @@ const parseStringParam = (value: unknown, fallback: string | undefined) => {
   return typeof value === "string" ? value : fallback;
 };
 
-const getTodos: RequestHandler = async (req, res, next) => {
+export const getTodos: RequestHandler = async (req, res, next) => {
   try {
     const { order } = req.query;
 
@@ -84,7 +84,7 @@ const getTodos: RequestHandler = async (req, res, next) => {
   }
 };
 
-const getTodoById: RequestHandler = async (req, res, next) => {
+export const getTodoById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -106,7 +106,7 @@ const getTodoById: RequestHandler = async (req, res, next) => {
   }
 };
 
-const createTodo: RequestHandler = async (req, res, next) => {
+export const createTodo: RequestHandler = async (req, res, next) => {
   const { title, done, categories } = req.body;
 
   try {
@@ -141,7 +141,7 @@ const createTodo: RequestHandler = async (req, res, next) => {
   }
 };
 
-const updateTodo: RequestHandler = async (req, res, next) => {
+export const updateTodo: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
   const { title, done, categories } = req.body;
 
@@ -179,7 +179,7 @@ const updateTodo: RequestHandler = async (req, res, next) => {
   }
 };
 
-const deleteTodo: RequestHandler = async (req, res, next) => {
+export const deleteTodo: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -196,12 +196,4 @@ const deleteTodo: RequestHandler = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-export = {
-  getTodos,
-  getTodoById,
-  createTodo,
-  updateTodo,
-  deleteTodo,
 };
