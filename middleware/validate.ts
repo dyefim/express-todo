@@ -1,7 +1,8 @@
-const { validationResult } = require("express-validator");
-const { validateQueryParams } = require("../validation/todos");
+import type { NextFunction, Request, Response } from "express";
+import { validationResult } from "express-validator";
+import { validateQueryParams } from "../validation/todos";
 
-const validate = (req, res, next) => {
+const validate = (req: Request, res: Response, next: NextFunction) => {
   const result = validationResult(req);
 
   if (!result.isEmpty()) {
@@ -19,4 +20,4 @@ const validate = (req, res, next) => {
   next();
 };
 
-module.exports = validate;
+export default validate;

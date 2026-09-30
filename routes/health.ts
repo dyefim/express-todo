@@ -1,15 +1,14 @@
-const express = require("express");
-const rateLimit = require("express-rate-limit");
-
-const { nodeEnv } = require("../config/env");
-const db = require("../config/db");
+import express from "express";
+import rateLimit from "express-rate-limit";
+import db from "../config/db";
+import env from "../config/env";
 
 const router = express.Router();
 
 const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   limit: 100,
-  skip: () => nodeEnv === "test",
+  skip: () => env.nodeEnv === "test",
 });
 
 router.use(limiter);
@@ -39,4 +38,4 @@ router.get("/", async (_req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

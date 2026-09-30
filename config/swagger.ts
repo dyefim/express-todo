@@ -1,6 +1,4 @@
-"use strict";
-
-const swaggerJSDoc = require("swagger-jsdoc");
+import swaggerJSDoc from "swagger-jsdoc";
 
 const swaggerSpec = swaggerJSDoc({
   definition: {
@@ -80,4 +78,4 @@ const swaggerSpec = swaggerJSDoc({
   apis: ["./routes/*.js", "./docs/paths/*.yaml"],
 });
 
-module.exports = swaggerSpec;
+export default swaggerSpec;

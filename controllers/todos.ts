@@ -1,6 +1,8 @@
-const db = require("../config/db");
+import type { RequestHandler } from "express";
+import db from "../config/db";
+import { parseIntParam, parseStringParam } from "../utils/parse";
 
-const sortFieldMap = {
+const sortFieldMap: Record<string, string> = {
   completed: "done",
 };
 
@@ -14,9 +16,14 @@ const todoCategoriesJoin = `
   LEFT JOIN categories c ON tc.category_id = c.id  
 `;
 
-const getTodos = async (req, res, next) => {
+export const getTodos: RequestHandler = async (req, res, next) => {
   try {
-    const { sort, order, search, page = 0, size = 10 } = req.query;
+    const { order } = req.query;
+
+    const page = parseIntParam(req.query.page, 0);
+    const size = parseIntParam(req.query.size, 10);
+    const sort = parseStringParam(req.query.sort, undefined);
+    const search = parseStringParam(req.query.search, undefined);
 
     const orderFilter = order === "desc" ? "DESC" : "ASC";
 
@@ -25,7 +32,7 @@ const getTodos = async (req, res, next) => {
         ${todoCategoriesJoin}
         WHERE t.created_by = $1 AND t.is_deleted = false`,
     ];
-    const params = [req.user.id];
+    const params: (string | number | undefined)[] = [req.user?.id];
 
     const totalQuery = [
       `SELECT COUNT(*) AS count FROM tasks 
@@ -43,15 +50,11 @@ const getTodos = async (req, res, next) => {
 
     const totalCount = parseInt(totalElements.count, 10);
 
-    query.push(
-      `GROUP BY t.id ORDER BY ${sortFieldMap[sort] || sort || "created_at"} ${orderFilter}`,
-    );
+    const sortField = (sort && sortFieldMap[sort]) || sort || "created_at";
 
-    let zeroBasedPage = Math.max(0, parseInt(page, 10) - 1);
+    query.push(`GROUP BY t.id ORDER BY ${sortField} ${orderFilter}`);
 
-    if (Number.isNaN(zeroBasedPage)) {
-      zeroBasedPage = 0;
-    }
+    const zeroBasedPage = Math.max(0, page - 1);
 
     query.push(`LIMIT $${params.length + 1} OFFSET $${params.length + 2}`);
     params.push(size, zeroBasedPage * size);
@@ -72,7 +75,7 @@ const getTodos = async (req, res, next) => {
   }
 };
 
-const getTodoById = async (req, res, next) => {
+export const getTodoById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
@@ -81,7 +84,7 @@ const getTodoById = async (req, res, next) => {
         ${todoCategoriesJoin}
         WHERE t.id = $1 AND t.created_by = $2 AND t.is_deleted = false
         GROUP BY t.id`,
-      [id, req.user.id],
+      [id, req.user?.id],
     );
 
     if (todo) {
@@ -94,7 +97,7 @@ const getTodoById = async (req, res, next) => {
   }
 };
 
-const createTodo = async (req, res, next) => {
+export const createTodo: RequestHandler = async (req, res, next) => {
   const { title, done, categories } = req.body;
 
   try {
@@ -103,7 +106,7 @@ const createTodo = async (req, res, next) => {
         `INSERT INTO tasks(title, done, created_by) 
             VALUES($1, $2, $3) 
             RETURNING id, title, done, created_by`,
-        [title, done === true, req.user.id],
+        [title, done === true, req.user?.id],
       );
 
       await t.none(
@@ -120,7 +123,7 @@ const createTodo = async (req, res, next) => {
         ${todoCategoriesJoin}
         WHERE t.id = $1 AND t.created_by = $2 
         GROUP BY t.id`,
-      [todo.id, req.user.id],
+      [todo.id, req.user?.id],
     );
 
     res.status(201).json(todoWithCategories);
@@ -129,7 +132,7 @@ const createTodo = async (req, res, next) => {
   }
 };
 
-const updateTodo = async (req, res, next) => {
+export const updateTodo: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
   const { title, done, categories } = req.body;
 
@@ -140,7 +143,7 @@ const updateTodo = async (req, res, next) => {
             done = COALESCE($2, done)
         WHERE id = $3 AND created_by = $4
         RETURNING id, title, done;`,
-      [title, done, id, req.user.id],
+      [title, done, id, req.user?.id],
     );
 
     if (!updatedTodo) {
@@ -167,13 +170,13 @@ const updateTodo = async (req, res, next) => {
   }
 };
 
-const deleteTodo = async (req, res, next) => {
+export const deleteTodo: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
     const result = await db.oneOrNone(
       "UPDATE tasks SET is_deleted = true WHERE id = $1 AND created_by = $2 RETURNING id",
-      [id, req.user.id],
+      [id, req.user?.id],
     );
 
     if (!result) {
@@ -184,12 +187,4 @@ const deleteTodo = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
-
-module.exports = {
-  getTodos,
-  getTodoById,
-  createTodo,
-  updateTodo,
-  deleteTodo,
 };
