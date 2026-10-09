@@ -13,14 +13,18 @@
     "lint": "biome lint",
     "lint:fix": "biome lint --write",
     "test": "tsx --env-file=.env.test --test",
-    "init:db": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -f /docker-entrypoint-initdb.d/init.sql'",
+    "db:init": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" -f /docker-entrypoint-initdb.d/init.sql'",
+    "db:connect": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\"'",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:drop": "docker compose down -v",
-    "migrate": "node-pg-migrate"
+    "migrate": "node-pg-migrate",
+    "contract:emit": "prisma contract emit"
   },
   "dependencies": {
+    "@prisma/orm-postgres": "^8.0.0-rc.13",
     "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
     "express-validator": "^7.3.2",
@@ -32,12 +36,14 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
+    "@prisma/cli-engine": "^0.6.2",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "node-pg-migrate": "^9.0.0",
+    "prisma": "^8.0.0-rc.19",
     "supertest": "^7.2.2",
     "typescript": "^7.0.2"
   }

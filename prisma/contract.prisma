@@ -1,0 +1,69 @@
+// use prisma-8
+// Contract inferred from the live database schema. Edit as needed, then run `prisma contract emit`.
+
+model Users {
+  id            Int             @id(map: "users_pkey") @default(autoincrement())
+  username      VarChar(50)     @unique(map: "users_username_key")
+  passwordHash  VarChar(255)    @map("password_hash")
+  createdAt     Timestamptz     @default(now()) @map("created_at")
+  categories    Categories[]
+  refreshTokens RefreshTokens[]
+  tasks         Tasks[]
+
+  @@map("users")
+}
+
+model Categories {
+  id             Int              @id(map: "todo_categories_pkey") @default(autoincrement())
+  name           VarChar(255)     @unique(map: "todo_categories_name_key")
+  createdAt      Timestamptz      @default(now()) @map("created_at")
+  createdBy      Int?             @map("created_by")
+  taskCategories TaskCategories[]
+  users          Users?           @relation(fields: [createdBy], references: [id], onDelete: Cascade, map: "todo_categories_created_by_fkey", index: false)
+
+  @@map("categories")
+}
+
+model Pgmigrations {
+  id    Int          @id(map: "pgmigrations_pkey") @default(autoincrement())
+  name  VarChar(255)
+  runOn Timestamp    @map("run_on")
+
+  @@map("pgmigrations")
+}
+
+model RefreshTokens {
+  id        Int          @id(map: "refresh_tokens_pkey") @default(autoincrement())
+  userId    Int          @map("user_id")
+  tokenHash VarChar(255) @map("token_hash")
+  expiresAt Timestamptz  @map("expires_at")
+  createdAt Timestamptz  @default(now()) @map("created_at")
+  user      Users        @relation(fields: [userId], references: [id], onDelete: Cascade, map: "refresh_tokens_user_id_fkey", index: false)
+
+  @@index([tokenHash], map: "idx_refresh_tokens_token_hash")
+  @@map("refresh_tokens")
+}
+
+model Tasks {
+  id             Int              @id(map: "todo_list_pkey") @default(autoincrement())
+  title          VarChar(255)
+  done           Boolean?         @default(false)
+  createdBy      Int?             @map("created_by")
+  createdAt      Timestamptz?     @default(now()) @map("created_at")
+  isDeleted      Boolean?         @default(false) @map("is_deleted")
+  taskCategories TaskCategories[]
+  users          Users?           @relation(fields: [createdBy], references: [id], onDelete: Cascade, map: "todo_list_created_by_fkey", index: false)
+
+  @@map("tasks")
+}
+
+model TaskCategories {
+  id         Int         @id(map: "todo_item_categories_pkey") @default(autoincrement())
+  taskId     Int         @map("task_id")
+  categoryId Int         @map("category_id")
+  createdAt  Timestamptz @default(now()) @map("created_at")
+  category   Categories  @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "todo_item_categories_category_id_fkey", index: false)
+  task       Tasks       @relation(fields: [taskId], references: [id], onDelete: Cascade, map: "todo_item_categories_todo_id_fkey", index: false)
+
+  @@map("task_categories")
+}
