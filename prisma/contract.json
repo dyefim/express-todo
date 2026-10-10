@@ -38,7 +38,7 @@
               "createdAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
@@ -168,14 +168,14 @@
               "createdAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
               "expiresAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
@@ -256,7 +256,7 @@
               "createdAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
@@ -333,7 +333,7 @@
               "createdAt": {
                 "nullable": true,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
@@ -439,7 +439,7 @@
               "createdAt": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "kind": "scalar"
                 }
               },
@@ -549,7 +549,7 @@
             "categories": {
               "columns": {
                 "created_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -582,7 +582,7 @@
               },
               "foreignKeys": [
                 {
-                  "name": "todo_categories_created_by_fkey",
+                  "name": "categories_created_by_fkey",
                   "onDelete": "cascade",
                   "source": {
                     "columns": [
@@ -605,14 +605,14 @@
                 "columns": [
                   "id"
                 ],
-                "name": "todo_categories_pkey"
+                "name": "categories_pkey"
               },
               "uniques": [
                 {
                   "columns": [
                     "name"
                   ],
-                  "name": "todo_categories_name_key"
+                  "name": "categories_name_key"
                 }
               ]
             },
@@ -654,7 +654,7 @@
             "refresh_tokens": {
               "columns": {
                 "created_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -663,7 +663,7 @@
                   "nullable": false
                 },
                 "expires_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
@@ -735,7 +735,7 @@
                   "nullable": false
                 },
                 "created_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -760,7 +760,7 @@
               },
               "foreignKeys": [
                 {
-                  "name": "todo_item_categories_category_id_fkey",
+                  "name": "task_categories_category_id_fkey",
                   "onDelete": "cascade",
                   "source": {
                     "columns": [
@@ -778,7 +778,7 @@
                   }
                 },
                 {
-                  "name": "todo_item_categories_todo_id_fkey",
+                  "name": "task_categories_task_id_fkey",
                   "onDelete": "cascade",
                   "source": {
                     "columns": [
@@ -801,14 +801,14 @@
                 "columns": [
                   "id"
                 ],
-                "name": "todo_item_categories_pkey"
+                "name": "task_categories_pkey"
               },
               "uniques": []
             },
             "tasks": {
               "columns": {
                 "created_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -859,7 +859,7 @@
               },
               "foreignKeys": [
                 {
-                  "name": "todo_list_created_by_fkey",
+                  "name": "tasks_created_by_fkey",
                   "onDelete": "cascade",
                   "source": {
                     "columns": [
@@ -882,14 +882,14 @@
                 "columns": [
                   "id"
                 ],
-                "name": "todo_list_pkey"
+                "name": "tasks_pkey"
               },
               "uniques": []
             },
             "users": {
               "columns": {
                 "created_at": {
-                  "codecId": "pg/timestamptz-temporal@1",
+                  "codecId": "pg/timestamptz-date@1",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
@@ -946,7 +946,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "89545f9acec126f8722fb462dd35c7137ad791a9b8d203fc655699e1ffde7bf8"
+    "storageHash": "4b3d1986f09d79535ba1e518f0cb7c06b9810a1fc7d6c6506fe086d31cd0debe"
   },
   "capabilities": {
     "postgres": {
