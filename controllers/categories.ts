@@ -1,12 +1,13 @@
 import type { RequestHandler } from "express";
-import db from "../config/db";
+import { db } from "../prisma/db";
 
 export const getCategories: RequestHandler = async (req, res, next) => {
   try {
-    const categories = await db.any(
-      "SELECT * FROM categories WHERE created_by = $1 ORDER BY created_at",
-      [req.user?.id],
-    );
+    const categories = await db.orm.public.Categories.where({
+      createdBy: req.user?.id,
+    })
+      .orderBy((p) => p.createdAt.desc())
+      .all();
 
     return res.json({
       data: categories,
@@ -20,10 +21,12 @@ export const getCategoryById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const category = await db.oneOrNone(
-      "SELECT * FROM categories WHERE id = $1 AND created_by = $2",
-      [id, req.user?.id],
-    );
+    const category = await db.orm.public.Categories.where({
+      createdBy: req.user?.id,
+      id: +id,
+    })
+      .orderBy((p) => p.createdAt.desc())
+      .first();
 
     if (category) {
       res.json(category);
@@ -39,10 +42,10 @@ export const createCategory: RequestHandler = async (req, res, next) => {
   const { name } = req.body;
 
   try {
-    const category = await db.one(
-      "INSERT INTO categories(name, created_by) VALUES($1, $2) RETURNING id, name, created_at, created_by",
-      [name, req.user?.id],
-    );
+    const category = await db.orm.public.Categories.create({
+      name,
+      createdBy: req.user?.id,
+    });
 
     res.status(201).json(category);
   } catch (error) {
@@ -55,15 +58,12 @@ export const updateCategory: RequestHandler = async (req, res, next) => {
   const { name } = req.body;
 
   try {
-    const updatedCategory = await db.oneOrNone(
-      `
-      UPDATE categories
-      SET name = COALESCE($1, name)
-      WHERE id = $2 AND created_by = $3
-      RETURNING id, name, created_at, created_by;
-    `,
-      [name, id, req.user?.id],
-    );
+    const updatedCategory = await db.orm.public.Categories.where({
+      id: +id,
+      createdBy: req.user?.id,
+    }).update({
+      name,
+    });
 
     if (updatedCategory) {
       return res.status(200).json(updatedCategory);
@@ -79,12 +79,12 @@ export const deleteCategory: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const result = await db.result(
-      "DELETE FROM categories WHERE id = $1 AND created_by = $2",
-      [id, req.user?.id],
-    );
+    const result = await db.orm.public.Categories.where({
+      id: +id,
+      createdBy: req.user?.id,
+    }).delete();
 
-    if (result.rowCount === 0) {
+    if (!result) {
       return res.status(404).send({ message: "Category not found" });
     }
 

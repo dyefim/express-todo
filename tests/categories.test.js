@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 
 const app = require("../app");
 const db = require("../config/db");
+const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 
 const mintAccessToken = (userId) =>
@@ -59,6 +60,7 @@ after(async () => {
     createdTodoIds,
   ]);
   await db.$pool.end();
+  await prismaDb.close();
 });
 
 describe("categories are protected", () => {
