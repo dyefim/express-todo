@@ -5,6 +5,7 @@ const request = require("supertest");
 
 const app = require("../app");
 const db = require("../config/db");
+const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 
 const username = `token_test_${Date.now()}`;
@@ -29,6 +30,7 @@ after(async () => {
   await db.none("DELETE FROM refresh_tokens");
   await db.none("DELETE FROM users WHERE username = $1", [username]);
   await db.$pool.end();
+  await prismaDb.close();
 });
 
 describe("sign up", () => {
