@@ -63,16 +63,10 @@ describe("login", () => {
   });
 
   test("missing password fails", async () => {
-    await request(app)
-      .post("/auth/login")
-      .send({ username })
-      .expect(400);
+    await request(app).post("/auth/login").send({ username }).expect(400);
   });
 
   test("missing username fails", async () => {
-    await request(app)
-      .post("/auth/login")
-      .send({ password })
-      .expect(400);
+    await request(app).post("/auth/login").send({ password }).expect(400);
   });
 });
