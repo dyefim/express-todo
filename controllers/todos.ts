@@ -1,5 +1,7 @@
 import type { RequestHandler } from "express";
 import db from "../config/db";
+import { db as prismaDB } from "../prisma/db";
+
 import { parseIntParam, parseStringParam } from "../utils/parse";
 
 const sortFieldMap: Record<string, string> = {
@@ -79,16 +81,23 @@ export const getTodoById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const todo = await db.oneOrNone(
-      `${todosWithCategoriesQuery}
-        ${todoCategoriesJoin}
-        WHERE t.id = $1 AND t.created_by = $2 AND t.is_deleted = false
-        GROUP BY t.id`,
-      [id, req.user?.id],
-    );
+    const task = await prismaDB.orm.public.Tasks.where({
+      id: Number(id),
+      createdBy: req.user?.id,
+      isDeleted: false,
+    })
+      .include("taskCategories", (tc) =>
+        tc
+          .include("category", (c) => c.select("id", "name"))
+          .orderBy((c) => c.createdAt.desc()),
+      )
+      .first();
 
-    if (todo) {
-      res.json(todo);
+    if (task) {
+      res.json({
+        ...task,
+        categories: task.taskCategories.map((tc) => tc.category),
+      });
     } else {
       res.status(404).send({ message: "Todo not found" });
     }
