@@ -18,6 +18,7 @@ const asUser = async (user) => {
   return {
     get: (url) => request(app).get(url).set(tokenHeaderKey, authorization),
     post: (url) => request(app).post(url).set(tokenHeaderKey, authorization),
+    patch: (url) => request(app).patch(url).set(tokenHeaderKey, authorization),
     delete: (url) =>
       request(app).delete(url).set(tokenHeaderKey, authorization),
   };
@@ -70,12 +71,44 @@ describe("todos are protected", () => {
     const userARequest = await asUser(userA);
     const userBRequest = await asUser(userB);
 
-    const todoResponse = await userBRequest
+    const user2TodoResponse = await userBRequest
       .post("/todos")
       .send({ title: "User 2 todo" })
       .expect(201);
 
-    await userARequest.get(`/todos/${todoResponse.body.id}`).expect(404);
+    const user2TodoByIdRoute = `/todos/${user2TodoResponse.body.id}`;
+
+    await userARequest.get(user2TodoByIdRoute).expect(404);
+    await userBRequest.get(user2TodoByIdRoute).expect(200);
+  });
+});
+
+describe("todos can be updated", () => {
+  let userA;
+
+  before(async () => {
+    userA = await createUser("UserA_todos_test_updated");
+  });
+
+  afterEach(async () => {
+    await db.none("DELETE FROM tasks WHERE created_by = $1", [userA.id]);
+  });
+
+  test("by title", async () => {
+    const userRequest = await asUser(userA);
+
+    const createResponse = await userRequest
+      .post("/todos")
+      .send({ title: "Old title" });
+    const todoId = createResponse.body.id;
+
+    await userRequest
+      .patch(`/todos/${todoId}`)
+      .send({ title: "New title" })
+      .expect(200);
+
+    const getResponse = await userRequest.get(`/todos/${todoId}`).expect(200);
+    assert.strictEqual(getResponse.body.title, "New title");
   });
 });
 
@@ -227,13 +260,7 @@ describe("todos are soft deleted", () => {
 
   before(async () => {
     userA = await createUser("UserA_todos_test_soft_deleted");
-  });
 
-  after(async () => {
-    await db.none("DELETE FROM tasks WHERE id = $1", [todoId]);
-  });
-
-  test("soft delete a todo", async () => {
     const userRequest = await asUser(userA);
 
     // Create a todo
@@ -241,6 +268,20 @@ describe("todos are soft deleted", () => {
       .post("/todos")
       .send({ title: "Todo to be deleted" });
     todoId = createResponse.body.id;
+  });
+
+  after(async () => {
+    await db.none("DELETE FROM tasks WHERE id = $1", [todoId]);
+  });
+
+  test("another user cannot delete the todo", async () => {
+    const userB = await createUser("UserB_todos_test_soft_deleted");
+    const userBRequest = await asUser(userB);
+    await userBRequest.delete(`/todos/${todoId}`).expect(404);
+  });
+
+  test("soft delete a todo", async () => {
+    const userRequest = await asUser(userA);
 
     // Soft delete the todo
     await userRequest.delete(`/todos/${todoId}`).expect(204);
@@ -256,5 +297,17 @@ describe("todos are soft deleted", () => {
       [todoId],
     );
     assert.strictEqual(dbResult.is_deleted, true);
+  });
+
+  test("deleted todo is not accessible by ID", async () => {
+    const userRequest = await asUser(userA);
+    await userRequest.get(`/todos/${todoId}`).expect(404);
+  });
+
+  test("deleted todo is not returned in the list", async () => {
+    const userRequest = await asUser(userA);
+    const response = await userRequest.get("/todos");
+    const todoIds = response.body.data.map((todo) => todo.id);
+    assert.strictEqual(todoIds.includes(todoId), false);
   });
 });
