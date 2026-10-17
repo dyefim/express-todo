@@ -19,6 +19,9 @@ const asUser = async (user) => {
   return {
     get: (url) => request(app).get(url).set(tokenHeaderKey, authorization),
     post: (url) => request(app).post(url).set(tokenHeaderKey, authorization),
+    patch: (url) => request(app).patch(url).set(tokenHeaderKey, authorization),
+    delete: (url) =>
+      request(app).delete(url).set(tokenHeaderKey, authorization),
   };
 };
 
@@ -86,12 +89,15 @@ describe("categories are protected", () => {
   test("user 2 can see their categories", async () => {
     const userBRequest = await asUser(userB);
 
-    await createCategory(userB, "Chores");
+    const category = await createCategory(userB, "Chores");
 
-    const categoriesResponse = await userBRequest
-      .get("/categories")
+    await userBRequest.get("/categories").expect(200);
+    assert.equal(category.body.name, "Chores");
+
+    const categoryResponse = await userBRequest
+      .get(`/categories/${category.body.id}`)
       .expect(200);
-    assert.equal(categoriesResponse.body.data[0].name, "Chores");
+    assert.equal(categoryResponse.body.name, "Chores");
   });
 
   test("user 1 cannot see user 2's categories", async () => {
@@ -153,5 +159,67 @@ describe("categories can be assigned to todo items", () => {
       todoItemResponse2.body.categories,
       categoryIds.slice(2, 4),
     );
+  });
+});
+
+describe("category can be updated", () => {
+  let userG;
+  let categoryToUpdate;
+
+  before(async () => {
+    userG = await createUser("UserG_categories_test_update");
+    categoryToUpdate = await createCategory(userG, "Initial");
+  });
+
+  test("user can update a category", async () => {
+    const userRequest = await asUser(userG);
+
+    const updatedCategoryResponse = await userRequest
+      .patch(`/categories/${categoryToUpdate.body.id}`)
+      .send({ name: "Updated" })
+      .expect(200);
+
+    assert.equal(updatedCategoryResponse.body.name, "Updated");
+  });
+
+  test("another user cannot update the category", async () => {
+    const userH = await createUser("UserH_categories_test_update");
+    const userRequest = await asUser(userH);
+
+    await userRequest
+      .patch(`/categories/${categoryToUpdate.body.id}`)
+      .send({ name: "Malicious Update" })
+      .expect(404);
+  });
+});
+
+describe("categories can be deleted", () => {
+  let userD;
+  let categoryToDelete;
+
+  before(async () => {
+    userD = await createUser("User_categories_test_deletion");
+    categoryToDelete = await createCategory(userD, "Temporary");
+  });
+
+  test("another user cannot delete the category", async () => {
+    const userE = await createUser("UserE_categories_test_deletion");
+    const userRequest = await asUser(userE);
+
+    await userRequest
+      .delete(`/categories/${categoryToDelete.body.id}`)
+      .expect(404);
+  });
+
+  test("user can delete a category", async () => {
+    const userRequest = await asUser(userD);
+
+    await userRequest
+      .delete(`/categories/${categoryToDelete.body.id}`)
+      .expect(204);
+
+    await userRequest
+      .get(`/categories/${categoryToDelete.body.id}`)
+      .expect(404);
   });
 });
