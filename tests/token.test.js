@@ -67,6 +67,24 @@ describe("sign up", () => {
   });
 });
 
+describe("token verification", () => {
+  test("invalid token structure", async () => {
+    const response = await request(app)
+      .get("/todos")
+      .set(tokenHeaderKey, `Bearer invalid_token`);
+
+    assert.equal(response.status, 401);
+  });
+
+  test("valid token structure", async () => {
+    const response = await request(app)
+      .get("/todos")
+      .set(tokenHeaderKey, `Bearer ${validToken}`);
+
+    assert.notEqual(response.status, 401);
+  });
+});
+
 describe("token authentication", () => {
   test("missing token", async () => {
     await request(app).get("/todos").expect(401);
