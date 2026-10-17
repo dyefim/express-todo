@@ -5,7 +5,9 @@ const request = require("supertest");
 
 const app = require("../app");
 const db = require("../config/db");
+const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
+const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `token_test_${Date.now()}`;
 const password = "correct_password";
@@ -29,6 +31,59 @@ after(async () => {
   await db.none("DELETE FROM refresh_tokens");
   await db.none("DELETE FROM users WHERE username = $1", [username]);
   await db.$pool.end();
+  await prismaDb.close();
+});
+
+describe("sign up", () => {
+  test("missing username fails", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ password });
+
+    assert.equal(response.status, 400);
+  });
+
+  test("missing password fails", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ username });
+
+    assert.equal(response.status, 400);
+  });
+
+  test("user can sign up", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ username, password });
+
+    assert.equal(response.status, 201);
+  });
+
+  test("duplicate username fails", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ username, password });
+
+    assert.equal(response.status, 409);
+  });
+});
+
+describe("token verification", () => {
+  test("invalid token structure", async () => {
+    const response = await request(app)
+      .get("/todos")
+      .set(tokenHeaderKey, `Bearer invalid_token`);
+
+    assert.equal(response.status, 401);
+  });
+
+  test("valid token structure", async () => {
+    const response = await request(app)
+      .get("/todos")
+      .set(tokenHeaderKey, `Bearer ${validToken}`);
+
+    assert.notEqual(response.status, 401);
+  });
 });
 
 describe("token authentication", () => {
@@ -74,6 +129,29 @@ describe("refresh token", () => {
       .send({ username, password });
 
     refreshToken = loginResponse.body.refreshToken;
+  });
+
+  test("missing refresh token", async () => {
+    const response = await request(app).post("/auth/refresh").send({});
+
+    assert.equal(response.status, 400);
+  });
+
+  test("expired refresh token", async () => {
+    const expiredRefreshToken = mintRefreshToken();
+    const user = await db.one("SELECT id FROM users WHERE username = $1", [
+      username,
+    ]);
+    await db.none(
+      "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
+      [user.id, expiredRefreshToken, new Date(Date.now() - 1000)],
+    );
+
+    const response = await request(app)
+      .post("/auth/refresh")
+      .send({ refreshToken: expiredRefreshToken });
+
+    assert.equal(response.status, 401);
   });
 
   test("valid refresh token", async () => {

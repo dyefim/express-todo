@@ -5,6 +5,7 @@ const request = require("supertest");
 const app = require("../app");
 const db = require("../config/db");
 const { mintRefreshToken } = require("../controllers/auth");
+const { db: prismaDb } = require("../prisma/db");
 
 const username = `login_test_${Date.now()}`;
 const password = "correct_login_password";
@@ -36,6 +37,7 @@ after(async () => {
   await db.none("DELETE FROM refresh_tokens WHERE user_id = $1", [userId]);
   await db.none("DELETE FROM users WHERE id = $1", [userId]);
   await db.$pool.end();
+  await prismaDb.close();
 });
 
 describe("login", () => {
@@ -58,5 +60,13 @@ describe("login", () => {
       .post("/auth/login")
       .send({ username: "unknown_username", password })
       .expect(401);
+  });
+
+  test("missing password fails", async () => {
+    await request(app).post("/auth/login").send({ username }).expect(400);
+  });
+
+  test("missing username fails", async () => {
+    await request(app).post("/auth/login").send({ password }).expect(400);
   });
 });
