@@ -7,6 +7,7 @@ const app = require("../app");
 const db = require("../config/db");
 const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
+const { mintRefreshToken } = require("../controllers/auth");
 
 const username = `token_test_${Date.now()}`;
 const password = "correct_password";
@@ -137,10 +138,14 @@ describe("refresh token", () => {
   });
 
   test("expired refresh token", async () => {
-    // Simulate an expired refresh token by using a token with a past expiration date
-    const expiredRefreshToken = jwt.sign({ data: { id: 0 } }, jwtSecretKey, {
-      expiresIn: "-1s",
-    });
+    const expiredRefreshToken = mintRefreshToken();
+    const user = await db.one("SELECT id FROM users WHERE username = $1", [
+      username,
+    ]);
+    await db.none(
+      "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
+      [user.id, expiredRefreshToken, new Date(Date.now() - 1000)],
+    );
 
     const response = await request(app)
       .post("/auth/refresh")

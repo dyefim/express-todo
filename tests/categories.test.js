@@ -91,8 +91,10 @@ describe("categories are protected", () => {
 
     const category = await createCategory(userB, "Chores");
 
-    await userBRequest.get("/categories").expect(200);
-    assert.equal(category.body.name, "Chores");
+    const categoriesResponse = await userBRequest
+      .get("/categories")
+      .expect(200);
+    assert.equal(categoriesResponse.body.data[0].name, "Chores");
 
     const categoryResponse = await userBRequest
       .get(`/categories/${category.body.id}`)
