@@ -10,9 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
   "include": ["**/*"],
   "exclude": [
