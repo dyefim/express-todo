@@ -28,17 +28,25 @@ interface EnvPairs {
   dbUser: string;
   dbPassword: string;
   dbName: string;
+  databaseUrl: string;
   jwtSecretKey: string;
   tokenHeaderKey: string;
 }
 
+const dbHost = process.env.DB_HOST || "localhost";
+const dbPort = Number(process.env.DB_PORT) || 5432;
+const dbUser = process.env.POSTGRES_USER;
+const dbPassword = process.env.POSTGRES_PASSWORD;
+const dbName = process.env.POSTGRES_DB;
+
 export = {
   nodeEnv: process.env.NODE_ENV || "development",
-  dbHost: process.env.DB_HOST || "localhost",
-  dbPort: Number(process.env.DB_PORT) || 5432,
-  dbUser: process.env.POSTGRES_USER,
-  dbPassword: process.env.POSTGRES_PASSWORD,
-  dbName: process.env.POSTGRES_DB,
+  dbHost,
+  dbPort,
+  dbUser,
+  dbPassword,
+  dbName,
+  databaseUrl: `postgres://${dbUser}${dbPassword ? `:${dbPassword}` : ""}@${dbHost}:${dbPort}/${dbName}`,
   jwtSecretKey: process.env.JWT_SECRET_KEY,
   tokenHeaderKey: process.env.TOKEN_HEADER_KEY,
 } as EnvPairs;
