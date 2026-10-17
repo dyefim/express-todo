@@ -31,6 +31,40 @@ after(async () => {
   await db.$pool.end();
 });
 
+describe("sign up", () => {
+  test("missing username fails", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ password });
+
+    assert.equal(response.status, 400);
+  });
+
+  test("missing password fails", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ username });
+
+    assert.equal(response.status, 400);
+  });
+
+  test("user can sign up", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ username, password });
+
+    assert.equal(response.status, 201);
+  });
+
+  test("duplicate username fails", async () => {
+    const response = await request(app)
+      .post("/auth/sign-up")
+      .send({ username, password });
+
+    assert.equal(response.status, 409);
+  });
+});
+
 describe("token authentication", () => {
   test("missing token", async () => {
     await request(app).get("/todos").expect(401);
@@ -74,6 +108,25 @@ describe("refresh token", () => {
       .send({ username, password });
 
     refreshToken = loginResponse.body.refreshToken;
+  });
+
+  test("missing refresh token", async () => {
+    const response = await request(app).post("/auth/refresh").send({});
+
+    assert.equal(response.status, 400);
+  });
+
+  test("expired refresh token", async () => {
+    // Simulate an expired refresh token by using a token with a past expiration date
+    const expiredRefreshToken = jwt.sign({ data: { id: 0 } }, jwtSecretKey, {
+      expiresIn: "-1s",
+    });
+
+    const response = await request(app)
+      .post("/auth/refresh")
+      .send({ refreshToken: expiredRefreshToken });
+
+    assert.equal(response.status, 401);
   });
 
   test("valid refresh token", async () => {
