@@ -8,7 +8,7 @@ const errorHandler = (
 ) => {
   console.error(err);
 
-  if ("code" in err && err.code === "23505") {
+  if ("sqlState" in err && err.sqlState === "23505") {
     return res.status(409).json({ message: "Duplicate entry" });
   }
 

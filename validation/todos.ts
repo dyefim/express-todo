@@ -30,7 +30,7 @@ const ALLOWED_QUERY_PARAMS = new Set([
   "page",
   "size",
 ]);
-const SORT_FIELDS = new Set(["title", "created_at", "completed"]);
+const SORT_FIELDS = new Set(["title", "created_at"]);
 const ORDER_VALUES = new Set(["asc", "desc"]);
 
 export const validateQueryParams = (req: Request) => {

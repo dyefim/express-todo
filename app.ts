@@ -10,8 +10,6 @@ import logger from "./middleware/logger";
 const app = express();
 const port = 3000;
 
-import db from "./config/db";
-
 app.use(logger);
 app.use(express.json());
 
@@ -34,10 +32,6 @@ app.use("/auth", authRoutes);
 app.use(errorHandler);
 
 if (require.main === module) {
-  db.one("SELECT 1")
-    .then(() => console.log("Database connected"))
-    .catch((err: unknown) => console.error("Database connection failed:", err));
-
   // Start the server only if this file is run directly
   app.listen(port, () => {
     fs.mkdirSync("logs", { recursive: true });

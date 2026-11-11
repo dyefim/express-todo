@@ -15,7 +15,7 @@
                 data:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Category'
+                    $ref: "#/components/schemas/Category"
   post:
     summary: Create a new category
     tags:
@@ -36,7 +36,7 @@
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Category'
+              $ref: "#/components/schemas/Category"
 
 /categories/{id}:
   get:
@@ -56,7 +56,7 @@
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Category'
+              $ref: "#/components/schemas/Category"
       404:
         description: Category not found.
 
@@ -85,7 +85,7 @@
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Category'
+              $ref: "#/components/schemas/Category"
       404:
         description: Category not found.
 

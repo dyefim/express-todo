@@ -4,7 +4,6 @@ const assert = require("node:assert/strict");
 const jwt = require("jsonwebtoken");
 
 const app = require("../app");
-const db = require("../config/db");
 const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 
@@ -28,10 +27,10 @@ const asUser = async (user) => {
 const createdUsers = [];
 
 const createUser = async (username, password = "pa55w0rd") => {
-  const user = await db.one(
-    "INSERT INTO users(username, password_hash) VALUES($1, $2) RETURNING id;",
-    [username, password],
-  );
+  const user = await prismaDb.orm.public.Users.create({
+    username,
+    passwordHash: password,
+  });
 
   user.token = mintAccessToken(user.id);
 
@@ -41,10 +40,9 @@ const createUser = async (username, password = "pa55w0rd") => {
 };
 
 after(async () => {
-  await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [
-    createdUsers.map((user) => user.id),
-  ]);
-  await db.$pool.end();
+  await prismaDb.orm.public.Users.where((u) =>
+    u.id.in(createdUsers.map((user) => user.id)),
+  ).deleteAndCount();
   await prismaDb.close();
 });
 
@@ -93,7 +91,9 @@ describe("todos can be updated", () => {
   });
 
   afterEach(async () => {
-    await db.none("DELETE FROM tasks WHERE created_by = $1", [userA.id]);
+    await prismaDb.orm.public.Tasks.where({
+      createdBy: userA.id,
+    }).deleteAndCount();
   });
 
   test("by title", async () => {
@@ -122,7 +122,9 @@ describe("todos can be sorted", () => {
   });
 
   afterEach(async () => {
-    await db.none("DELETE FROM tasks WHERE created_by = $1", [userA.id]);
+    await prismaDb.orm.public.Tasks.where({
+      createdBy: userA.id,
+    }).deleteAndCount();
   });
 
   test("by title", async () => {
@@ -173,25 +175,6 @@ describe("todos can be sorted", () => {
 
       assert.strictEqual(res.body.data[firstIndex].title, "First todo");
       assert.strictEqual(res.body.data[secondIndex].title, "Second todo");
-    });
-  });
-
-  test("by completion status", async () => {
-    const userRequest = await asUser(userA);
-
-    await userRequest.post("/todos").send({ title: "Incomplete todo" });
-    await userRequest
-      .post("/todos")
-      .send({ title: "Completed todo", done: true });
-
-    await userRequest.get("/todos?sort=completed").expect((res) => {
-      assert.strictEqual(res.body.data[0].title, "Incomplete todo");
-      assert.strictEqual(res.body.data[1].title, "Completed todo");
-    });
-
-    await userRequest.get("/todos?sort=completed&order=desc").expect((res) => {
-      assert.strictEqual(res.body.data[0].title, "Completed todo");
-      assert.strictEqual(res.body.data[1].title, "Incomplete todo");
     });
   });
 });
@@ -273,7 +256,7 @@ describe("todos are soft deleted", () => {
   });
 
   after(async () => {
-    await db.none("DELETE FROM tasks WHERE id = $1", [todoId]);
+    await prismaDb.orm.public.Tasks.where({ id: todoId }).deleteAndCount();
   });
 
   test("another user cannot delete the todo", async () => {
@@ -294,11 +277,10 @@ describe("todos are soft deleted", () => {
     });
 
     // Verify the todo still exists in the database with a deleted flag
-    const dbResult = await db.one(
-      "SELECT is_deleted FROM tasks WHERE id = $1",
-      [todoId],
-    );
-    assert.strictEqual(dbResult.is_deleted, true);
+    const dbResult = await prismaDb.orm.public.Tasks.where({
+      id: todoId,
+    }).first();
+    assert.strictEqual(dbResult.isDeleted, true);
   });
 
   test("deleted todo is not accessible by ID", async () => {
