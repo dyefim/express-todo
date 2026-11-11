@@ -3,7 +3,6 @@ const { after, before, describe, test } = require("node:test");
 const request = require("supertest");
 
 const app = require("../app");
-const db = require("../config/db");
 const { mintRefreshToken } = require("../controllers/auth");
 const { db: prismaDb } = require("../prisma/db");
 
@@ -16,27 +15,24 @@ let refreshToken;
 before(async () => {
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const user = await db.one(
-    `INSERT INTO users(username, password_hash)
-     VALUES($1, $2)
-     RETURNING id`,
-    [username, passwordHash],
-  );
+  const user = await prismaDb.orm.public.Users.create({
+    username,
+    passwordHash,
+  });
 
   userId = user.id;
   refreshToken = mintRefreshToken();
 
-  await db.none(
-    `INSERT INTO refresh_tokens(user_id, token_hash, expires_at)
-     VALUES($1, $2, $3)`,
-    [userId, refreshToken, new Date(Date.now() + 10 * 60 * 1000)],
-  );
+  await prismaDb.orm.public.RefreshTokens.create({
+    userId,
+    tokenHash: refreshToken,
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
 });
 
 after(async () => {
-  await db.none("DELETE FROM refresh_tokens WHERE user_id = $1", [userId]);
-  await db.none("DELETE FROM users WHERE id = $1", [userId]);
-  await db.$pool.end();
+  await prismaDb.orm.public.RefreshTokens.where({ userId }).deleteAndCount();
+  await prismaDb.orm.public.Users.where({ id: userId }).deleteAndCount();
   await prismaDb.close();
 });
 

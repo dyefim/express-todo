@@ -147,7 +147,7 @@ export const updateTodo: RequestHandler = async (req, res, next) => {
       await db.transaction(async (tx) => {
         await tx.orm.public.TaskCategories.where({
           taskId: +id,
-        }).delete();
+        }).deleteAndCount();
 
         if (categories.length > 0) {
           await tx.orm.public.TaskCategories.createAll(

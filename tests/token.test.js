@@ -4,7 +4,6 @@ const assert = require("node:assert/strict");
 const request = require("supertest");
 
 const app = require("../app");
-const db = require("../config/db");
 const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 const { mintRefreshToken } = require("../controllers/auth");
@@ -28,9 +27,8 @@ const validToken = jwt.sign({ data: { id: 0 } }, jwtSecretKey, {
 });
 
 after(async () => {
-  await db.none("DELETE FROM refresh_tokens");
-  await db.none("DELETE FROM users WHERE username = $1", [username]);
-  await db.$pool.end();
+  await prismaDb.orm.public.RefreshTokens.where({}).deleteAndCount();
+  await prismaDb.orm.public.Users.where({ username }).deleteAndCount();
   await prismaDb.close();
 });
 
@@ -139,13 +137,12 @@ describe("refresh token", () => {
 
   test("expired refresh token", async () => {
     const expiredRefreshToken = mintRefreshToken();
-    const user = await db.one("SELECT id FROM users WHERE username = $1", [
-      username,
-    ]);
-    await db.none(
-      "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
-      [user.id, expiredRefreshToken, new Date(Date.now() - 1000)],
-    );
+    const user = await prismaDb.orm.public.Users.where({ username }).first();
+    await prismaDb.orm.public.RefreshTokens.create({
+      userId: user.id,
+      tokenHash: expiredRefreshToken,
+      expiresAt: new Date(Date.now() - 1000),
+    });
 
     const response = await request(app)
       .post("/auth/refresh")

@@ -4,7 +4,6 @@ const assert = require("node:assert/strict");
 const jwt = require("jsonwebtoken");
 
 const app = require("../app");
-const db = require("../config/db");
 const { db: prismaDb } = require("../prisma/db");
 const { jwtSecretKey, tokenHeaderKey } = require("../config/env");
 
@@ -30,10 +29,10 @@ const createdTodoIds = [];
 const createdCategoryIds = [];
 
 const createUser = async (username, password = "pa55w0rd") => {
-  const user = await db.one(
-    "INSERT INTO users(username, password_hash) VALUES($1, $2) RETURNING id;",
-    [username, password],
-  );
+  const user = await prismaDb.orm.public.Users.create({
+    username,
+    passwordHash: password,
+  });
 
   user.token = mintAccessToken(user.id);
 
@@ -55,14 +54,15 @@ const createCategory = async (user, categoryName) => {
 };
 
 after(async () => {
-  await db.none("DELETE FROM users WHERE id = ANY($1::int[])", [createdUsers]);
-  await db.none("DELETE FROM categories WHERE id = ANY($1::int[])", [
-    createdCategoryIds,
-  ]);
-  await db.none("DELETE FROM tasks WHERE id = ANY($1::int[])", [
-    createdTodoIds,
-  ]);
-  await db.$pool.end();
+  await prismaDb.orm.public.Users.where((u) =>
+    u.id.in(createdUsers),
+  ).deleteAndCount();
+  await prismaDb.orm.public.Categories.where((c) =>
+    c.id.in(createdCategoryIds),
+  ).deleteAndCount();
+  await prismaDb.orm.public.Tasks.where((t) =>
+    t.id.in(createdTodoIds),
+  ).deleteAndCount();
   await prismaDb.close();
 });
 

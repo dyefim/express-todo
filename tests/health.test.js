@@ -2,12 +2,10 @@ const { after, describe, test } = require("node:test");
 const assert = require("node:assert/strict");
 const request = require("supertest");
 
-const db = require("../config/db");
 const { db: prismaDb } = require("../prisma/db");
 const app = require("../app");
 
 after(async () => {
-  await db.$pool.end();
   await prismaDb.close();
 });
 
