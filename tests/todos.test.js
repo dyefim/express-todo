@@ -175,25 +175,6 @@ describe("todos can be sorted", () => {
       assert.strictEqual(res.body.data[secondIndex].title, "Second todo");
     });
   });
-
-  test("by completion status", async () => {
-    const userRequest = await asUser(userA);
-
-    await userRequest.post("/todos").send({ title: "Incomplete todo" });
-    await userRequest
-      .post("/todos")
-      .send({ title: "Completed todo", done: true });
-
-    await userRequest.get("/todos?sort=completed").expect((res) => {
-      assert.strictEqual(res.body.data[0].title, "Incomplete todo");
-      assert.strictEqual(res.body.data[1].title, "Completed todo");
-    });
-
-    await userRequest.get("/todos?sort=completed&order=desc").expect((res) => {
-      assert.strictEqual(res.body.data[0].title, "Completed todo");
-      assert.strictEqual(res.body.data[1].title, "Incomplete todo");
-    });
-  });
 });
 
 describe("todos can be searched", () => {

@@ -10,7 +10,7 @@
         in: query
         schema:
           type: string
-          enum: [title, created_at, completed]
+          enum: [title, created_at]
       - name: order
         in: query
         schema:

@@ -1,22 +1,12 @@
 import type { RequestHandler } from "express";
-import db from "../config/db";
-import { db as prismaDB } from "../prisma/db";
+import { db } from "../prisma/db";
 
 import { parseIntParam, parseStringParam } from "../utils/parse";
 
-const sortFieldMap: Record<string, string> = {
-  completed: "done",
-};
-
-const todosWithCategoriesQuery = `
-  SELECT t.*, COALESCE(array_agg(c.name) FILTER (WHERE c.id IS NOT NULL), '{}') AS categories
-`;
-
-const todoCategoriesJoin = `
-  FROM tasks t 
-  LEFT JOIN task_categories tc ON t.id = tc.task_id 
-  LEFT JOIN categories c ON tc.category_id = c.id  
-`;
+const sortFields = {
+  created_at: "createdAt",
+  title: "title",
+} as const;
 
 export const getTodos: RequestHandler = async (req, res, next) => {
   try {
@@ -27,48 +17,37 @@ export const getTodos: RequestHandler = async (req, res, next) => {
     const sort = parseStringParam(req.query.sort, undefined);
     const search = parseStringParam(req.query.search, undefined);
 
-    const orderFilter = order === "desc" ? "DESC" : "ASC";
-
-    const query = [
-      `${todosWithCategoriesQuery}
-        ${todoCategoriesJoin}
-        WHERE t.created_by = $1 AND t.is_deleted = false`,
-    ];
-    const params: (string | number | undefined)[] = [req.user?.id];
-
-    const totalQuery = [
-      `SELECT COUNT(*) AS count FROM tasks 
-        WHERE created_by = $1 AND is_deleted = false`,
-    ];
-
-    if (search) {
-      const searchQueryFragment = `AND title ILIKE $${params.length + 1}`;
-      query.push(searchQueryFragment);
-      totalQuery.push(searchQueryFragment);
-      params.push(`%${search}%`);
-    }
-
-    const totalElements = await db.one(totalQuery.join(" "), params);
-
-    const totalCount = parseInt(totalElements.count, 10);
-
-    const sortField = (sort && sortFieldMap[sort]) || sort || "created_at";
-
-    query.push(`GROUP BY t.id ORDER BY ${sortField} ${orderFilter}`);
+    const sortField =
+      sort && Object.hasOwn(sortFields, sort)
+        ? sortFields[sort as keyof typeof sortFields]
+        : "createdAt";
+    const direction = order === "desc" ? "desc" : "asc";
 
     const zeroBasedPage = Math.max(0, page - 1);
 
-    query.push(`LIMIT $${params.length + 1} OFFSET $${params.length + 2}`);
-    params.push(size, zeroBasedPage * size);
+    const tasks = db.orm.public.Tasks.where({
+      createdBy: req.user?.id,
+      isDeleted: false,
+    });
+    const filtered = search
+      ? tasks.where((t) => t.title.ilike(`%${search}%`))
+      : tasks;
 
-    const todos = await db.any(query.join(" "), params);
+    const [{ total }, todos] = await Promise.all([
+      filtered.aggregate((t) => ({ total: t.count() })),
+      filtered
+        .orderBy([(t) => t[sortField][direction](), (t) => t.id.asc()])
+        .limit(size)
+        .offset(zeroBasedPage * size)
+        .all(),
+    ]);
 
     return res.json({
       data: todos,
       page: {
         size,
-        totalElements: totalCount,
-        totalPages: Math.ceil(totalCount / size),
+        totalElements: total,
+        totalPages: Math.ceil(total / size),
         number: zeroBasedPage,
       },
     });
@@ -81,7 +60,7 @@ export const getTodoById: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const task = await prismaDB.orm.public.Tasks.where({
+    const task = await db.orm.public.Tasks.where({
       id: Number(id),
       createdBy: req.user?.id,
       isDeleted: false,
@@ -110,30 +89,36 @@ export const createTodo: RequestHandler = async (req, res, next) => {
   const { title, done, categories } = req.body;
 
   try {
-    const todo = await db.tx(async (t) => {
-      const todoResult = await t.one(
-        `INSERT INTO tasks(title, done, created_by) 
-            VALUES($1, $2, $3) 
-            RETURNING id, title, done, created_by`,
-        [title, done === true, req.user?.id],
-      );
+    const todo = await db.transaction(async (tx) => {
+      const todoResult = await tx.orm.public.Tasks.create({
+        title,
+        done: done === true,
+        createdBy: req.user?.id,
+      });
 
-      await t.none(
-        `INSERT INTO task_categories(task_id, category_id)
-            SELECT $1, id FROM categories WHERE id = ANY($2::int[])`,
-        [todoResult.id, categories || []],
-      );
+      if (Array.isArray(categories) && categories.length > 0) {
+        await tx.orm.public.TaskCategories.createAll(
+          categories.map((categoryId: number) => ({
+            taskId: todoResult.id,
+            categoryId,
+          })),
+        );
+      }
 
       return todoResult;
     });
 
-    const todoWithCategories = await db.oneOrNone(
-      `${todosWithCategoriesQuery}
-        ${todoCategoriesJoin}
-        WHERE t.id = $1 AND t.created_by = $2 
-        GROUP BY t.id`,
-      [todo.id, req.user?.id],
-    );
+    const todoWithCategories = await db.orm.public.Tasks.where({
+      id: todo.id,
+      createdBy: req.user?.id,
+      isDeleted: false,
+    })
+      .include("taskCategories", (tc) =>
+        tc
+          .include("category", (c) => c.select("id", "name"))
+          .orderBy((c) => c.createdAt.desc()),
+      )
+      .first();
 
     res.status(201).json(todoWithCategories);
   } catch (error) {
@@ -146,30 +131,32 @@ export const updateTodo: RequestHandler = async (req, res, next) => {
   const { title, done, categories } = req.body;
 
   try {
-    const updatedTodo = await db.oneOrNone(
-      `UPDATE tasks
-        SET title = COALESCE($1, title),
-            done = COALESCE($2, done)
-        WHERE id = $3 AND created_by = $4
-        RETURNING id, title, done;`,
-      [title, done, id, req.user?.id],
-    );
+    const updatedTodo = await db.orm.public.Tasks.where({
+      id: +id,
+      createdBy: req.user?.id,
+    }).update({
+      title: title ?? undefined,
+      done: done ?? undefined,
+    });
 
     if (!updatedTodo) {
       return res.status(404).json({ message: "Todo not found" });
     }
 
     if (Array.isArray(categories)) {
-      await db.tx(async (t) => {
-        // remove existing categories
-        await t.none(`DELETE FROM task_categories WHERE task_id = $1`, [id]);
+      await db.transaction(async (tx) => {
+        await tx.orm.public.TaskCategories.where({
+          taskId: +id,
+        }).delete();
 
-        // add new categories
-        await t.none(
-          `INSERT INTO task_categories(task_id, category_id)
-          SELECT $1, id FROM categories WHERE id = ANY($2::int[])`,
-          [id, categories || []],
-        );
+        if (categories.length > 0) {
+          await tx.orm.public.TaskCategories.createAll(
+            categories.map((categoryId: number) => ({
+              taskId: +id,
+              categoryId,
+            })),
+          );
+        }
       });
     }
 
@@ -183,10 +170,12 @@ export const deleteTodo: RequestHandler = async (req, res, next) => {
   const { id } = req.params;
 
   try {
-    const result = await db.oneOrNone(
-      "UPDATE tasks SET is_deleted = true WHERE id = $1 AND created_by = $2 RETURNING id",
-      [id, req.user?.id],
-    );
+    const result = await db.orm.public.Tasks.where({
+      id: +id,
+      createdBy: req.user?.id,
+    }).update({
+      isDeleted: true,
+    });
 
     if (!result) {
       return res.status(404).send({ message: "Todo not found" });
