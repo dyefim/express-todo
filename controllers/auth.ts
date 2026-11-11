@@ -55,12 +55,10 @@ export const signUp: RequestHandler = async (req, res, next) => {
       passwordHash: passwordHash as Varchar<255>,
     });
 
-    return res
-      .status(201)
-      .json({
-        message: "User registered successfully",
-        user: { id: user.id, username: user.username },
-      });
+    return res.status(201).json({
+      message: "User registered successfully",
+      user: { id: user.id, username: user.username },
+    });
   } catch (err) {
     if ((err as { sqlState?: string }).sqlState === "23505") {
       // Handle unique constraint violation before the middleware does to avoid generic error response
@@ -129,15 +127,25 @@ export const refresh: RequestHandler = async (req, res) => {
   const newRefreshToken = mintRefreshToken();
   const tokenExpirationDate = getRefreshTokenExpirationDate();
 
-  await prismaDB.transaction(async (tx) => {
+  const rotated = await prismaDB.transaction(async (tx) => {
+    const consumed = await tx.orm.public.RefreshTokens.where({
+      id: storedToken.id,
+    }).deleteAndCount();
+
+    if (consumed === 0) return false;
+
     await tx.orm.public.RefreshTokens.create({
       userId: storedToken.userId,
       tokenHash: newRefreshToken as Varchar<255>,
       expiresAt: tokenExpirationDate,
     });
 
-    await tx.orm.public.RefreshTokens.where({ id: storedToken.id }).delete();
+    return true;
   });
+
+  if (!rotated) {
+    return res.status(401).json({ error: "Invalid refresh token" });
+  }
 
   res.json({ token: newAccessToken, refreshToken: newRefreshToken });
 };
