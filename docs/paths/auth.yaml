@@ -8,7 +8,7 @@
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/SignUpRequest'
+            $ref: "#/components/schemas/SignUpRequest"
     responses:
       201:
         description: User registered successfully.
@@ -20,11 +20,11 @@
                 message:
                   type: string
                 user:
-                  $ref: '#/components/schemas/User'
+                  $ref: "#/components/schemas/User"
       400:
-        $ref: '#/components/responses/BadRequest'
+        $ref: "#/components/responses/BadRequest"
       409:
-        $ref: '#/components/responses/Conflict'
+        $ref: "#/components/responses/Conflict"
 
 /auth/login:
   post:
@@ -56,7 +56,7 @@
                 refreshToken:
                   type: string
       400:
-        $ref: '#/components/responses/BadRequest'
+        $ref: "#/components/responses/BadRequest"
       401:
         description: Invalid username or password.
         content:
@@ -93,7 +93,7 @@
                 token:
                   type: string
       400:
-        $ref: '#/components/responses/BadRequest'
+        $ref: "#/components/responses/BadRequest"
       401:
         description: Invalid refresh token.
         content:
