@@ -75,7 +75,7 @@ export const getTodoById: RequestHandler = async (req, res, next) => {
     if (task) {
       res.json({
         ...task,
-        categories: task.taskCategories.map((tc) => tc.category),
+        categories: task.taskCategories.map((tc) => tc.category?.name),
       });
     } else {
       res.status(404).send({ message: "Todo not found" });
@@ -120,7 +120,17 @@ export const createTodo: RequestHandler = async (req, res, next) => {
       )
       .first();
 
-    res.status(201).json(todoWithCategories);
+    if (!todoWithCategories) {
+      res.status(201).json(todoWithCategories);
+      return;
+    }
+
+    const { taskCategories, ...task } = todoWithCategories;
+
+    res.status(201).json({
+      ...task,
+      categories: taskCategories.map((tc) => tc.category?.name),
+    });
   } catch (error) {
     next(error);
   }
