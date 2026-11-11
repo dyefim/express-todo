@@ -18,7 +18,6 @@
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:drop": "docker compose down -v",
-    "migrate": "node-pg-migrate",
     "contract:emit": "prisma contract emit"
   },
   "dependencies": {
