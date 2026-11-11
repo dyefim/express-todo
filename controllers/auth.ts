@@ -1,9 +1,11 @@
 import crypto from "node:crypto";
+import type { Varchar } from "@prisma/orm-postgres/target/codec-types";
 import bcrypt from "bcryptjs";
 import type { RequestHandler } from "express";
 import jwt from "jsonwebtoken";
-import db from "../config/db";
+
 import env from "../config/env";
+import { db as prismaDB } from "../prisma/db";
 
 const tokenHeaderKey = env.tokenHeaderKey;
 const jwtSecretKey = env.jwtSecretKey;
@@ -48,16 +50,16 @@ export const signUp: RequestHandler = async (req, res, next) => {
   const passwordHash = await bcrypt.hash(password, 10);
 
   try {
-    const user = await db.one(
-      "INSERT INTO users(username, password_hash) VALUES($1, $2) RETURNING id, username",
-      [username, passwordHash],
-    );
+    const user = await prismaDB.orm.public.Users.create({
+      username,
+      passwordHash: passwordHash as Varchar<255>,
+    });
 
     return res
       .status(201)
       .json({ message: "User registered successfully", user });
   } catch (err) {
-    if ((err as { code?: string }).code === "23505") {
+    if ((err as { sqlState?: string }).sqlState === "23505") {
       // Handle unique constraint violation before the middleware does to avoid generic error response
       return res.status(409).json({ error: "Username already exists" });
     }
@@ -75,15 +77,15 @@ export const login: RequestHandler = async (req, res) => {
       .json({ error: "Username and password are required" });
   }
 
-  const user = await db.oneOrNone("SELECT * FROM users WHERE username = $1", [
+  const user = await prismaDB.orm.public.Users.where({
     username,
-  ]);
+  }).first();
 
   if (!user) {
     return res.status(401).json({ error: "Invalid username or password" });
   }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordValid) {
     return res.status(401).json({ error: "Invalid username or password" });
@@ -95,11 +97,11 @@ export const login: RequestHandler = async (req, res) => {
 
   const tokenExpirationDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-  await db.none(
-    "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
-    [user.id, await refreshToken, tokenExpirationDate],
-  );
-  await db.none("DELETE FROM refresh_tokens WHERE expires_at < now()");
+  await prismaDB.orm.public.RefreshTokens.create({
+    userId: user.id,
+    tokenHash: refreshToken as Varchar<255>,
+    expiresAt: tokenExpirationDate,
+  });
 
   res.json({ token, refreshToken });
 };
@@ -111,25 +113,28 @@ export const refresh: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "Refresh token is required" });
   }
 
-  const storedToken = await db.oneOrNone(
-    "SELECT * FROM refresh_tokens WHERE token_hash = $1",
-    [refreshToken],
-  );
+  const storedToken = await prismaDB.orm.public.RefreshTokens.where({
+    tokenHash: refreshToken,
+  }).first();
 
-  if (!storedToken || storedToken.expires_at < new Date()) {
+  if (!storedToken || storedToken.expiresAt < new Date()) {
     return res.status(401).json({ error: "Invalid refresh token" });
   }
 
-  const newAccessToken = mintAccessToken(storedToken.user_id);
+  const newAccessToken = mintAccessToken(storedToken.userId);
 
   const newRefreshToken = mintRefreshToken();
   const tokenExpirationDate = getRefreshTokenExpirationDate();
 
-  await db.none(
-    "INSERT INTO refresh_tokens(user_id, token_hash, expires_at) VALUES($1, $2, $3)",
-    [storedToken.user_id, newRefreshToken, tokenExpirationDate],
-  );
-  await db.none("DELETE FROM refresh_tokens WHERE id = $1", [storedToken.id]);
+  await prismaDB.transaction(async (tx) => {
+    await tx.orm.public.RefreshTokens.create({
+      userId: storedToken.userId,
+      tokenHash: newRefreshToken as Varchar<255>,
+      expiresAt: tokenExpirationDate,
+    });
+
+    await tx.orm.public.RefreshTokens.where({ id: storedToken.id }).delete();
+  });
 
   res.json({ token: newAccessToken, refreshToken: newRefreshToken });
 };

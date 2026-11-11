@@ -1,7 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import db from "../config/db";
 import env from "../config/env";
+import { db } from "../prisma/db";
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.get("/", async (_req, res, next) => {
       );
     });
 
-    const dbQuery = db.any("SELECT 1");
+    const dbQuery = db.raw.sql`SELECT 1`;
     const result = await Promise.race([dbQuery, timeout]);
 
     if (!result) {
