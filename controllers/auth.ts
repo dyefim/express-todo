@@ -57,7 +57,10 @@ export const signUp: RequestHandler = async (req, res, next) => {
 
     return res
       .status(201)
-      .json({ message: "User registered successfully", user });
+      .json({
+        message: "User registered successfully",
+        user: { id: user.id, username: user.username },
+      });
   } catch (err) {
     if ((err as { sqlState?: string }).sqlState === "23505") {
       // Handle unique constraint violation before the middleware does to avoid generic error response
