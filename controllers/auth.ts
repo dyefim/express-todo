@@ -104,6 +104,10 @@ export const login: RequestHandler = async (req, res) => {
     expiresAt: tokenExpirationDate,
   });
 
+  await prismaDB.orm.public.RefreshTokens.where((t) =>
+    t.expiresAt.lt(new Date()),
+  ).deleteAndCount();
+
   res.json({ token, refreshToken });
 };
 
