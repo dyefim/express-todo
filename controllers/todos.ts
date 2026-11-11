@@ -8,6 +8,29 @@ const sortFields = {
   title: "title",
 } as const;
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// Matches the old `INSERT ... SELECT id FROM categories WHERE id = ANY(...)`: duplicates and unknown IDs are skipped.
+const linkCategories = async (
+  tx: Tx,
+  taskId: number,
+  categoryIds: number[],
+) => {
+  if (categoryIds.length === 0) return;
+
+  const existing = await tx.orm.public.Categories.where((c) =>
+    c.id.in(categoryIds),
+  )
+    .select("id")
+    .all();
+
+  if (existing.length === 0) return;
+
+  await tx.orm.public.TaskCategories.createAll(
+    existing.map((category) => ({ taskId, categoryId: category.id })),
+  );
+};
+
 export const getTodos: RequestHandler = async (req, res, next) => {
   try {
     const { order } = req.query;
@@ -96,13 +119,8 @@ export const createTodo: RequestHandler = async (req, res, next) => {
         createdBy: req.user?.id,
       });
 
-      if (Array.isArray(categories) && categories.length > 0) {
-        await tx.orm.public.TaskCategories.createAll(
-          categories.map((categoryId: number) => ({
-            taskId: todoResult.id,
-            categoryId,
-          })),
-        );
+      if (Array.isArray(categories)) {
+        await linkCategories(tx, todoResult.id, categories);
       }
 
       return todoResult;
@@ -141,33 +159,28 @@ export const updateTodo: RequestHandler = async (req, res, next) => {
   const { title, done, categories } = req.body;
 
   try {
-    const updatedTodo = await db.orm.public.Tasks.where({
-      id: +id,
-      createdBy: req.user?.id,
-    }).update({
-      title: title ?? undefined,
-      done: done ?? undefined,
-    });
+    const updatedTodo = await db.transaction(async (tx) => {
+      const updated = await tx.orm.public.Tasks.where({
+        id: +id,
+        createdBy: req.user?.id,
+      }).update({
+        title: title ?? undefined,
+        done: done ?? undefined,
+      });
 
-    if (!updatedTodo) {
-      return res.status(404).json({ message: "Todo not found" });
-    }
-
-    if (Array.isArray(categories)) {
-      await db.transaction(async (tx) => {
+      if (updated && Array.isArray(categories)) {
         await tx.orm.public.TaskCategories.where({
           taskId: +id,
         }).deleteAndCount();
 
-        if (categories.length > 0) {
-          await tx.orm.public.TaskCategories.createAll(
-            categories.map((categoryId: number) => ({
-              taskId: +id,
-              categoryId,
-            })),
-          );
-        }
-      });
+        await linkCategories(tx, +id, categories);
+      }
+
+      return updated;
+    });
+
+    if (!updatedTodo) {
+      return res.status(404).json({ message: "Todo not found" });
     }
 
     res.status(200).json({ message: "Todo updated successfully" });
