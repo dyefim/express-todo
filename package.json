@@ -7,8 +7,8 @@
   "type": "commonjs",
   "main": "app.js",
   "scripts": {
-    "start": "tsx app.js",
-    "dev": "npm run docker:up && tsx watch app.js",
+    "start": "tsx app.ts",
+    "dev": "npm run docker:up && tsx watch app.ts",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint",
     "lint:fix": "biome lint --write",
