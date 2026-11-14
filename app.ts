@@ -9,6 +9,8 @@ import logger from "./middleware/logger";
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(logger);
 app.use(express.json());
 
