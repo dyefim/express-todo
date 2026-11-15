@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import path from "node:path";
 import express from "express";
 import swaggerUi from "swagger-ui-express";
@@ -8,7 +7,8 @@ import errorHandler from "./middleware/error";
 import logger from "./middleware/logger";
 
 const app = express();
-const port = 3000;
+
+app.set("trust proxy", 1);
 
 app.use(logger);
 app.use(express.json());
@@ -33,13 +33,8 @@ app.use(errorHandler);
 
 if (require.main === module) {
   // Start the server only if this file is run directly
-  app.listen(port, () => {
-    fs.mkdirSync("logs", { recursive: true });
-    if (!fs.existsSync("logs/operations.log")) {
-      fs.writeFileSync("logs/operations.log", "");
-    }
-
-    console.log(`App listening on port ${port}`);
+  app.listen(env.port, () => {
+    console.log(`App listening on port ${env.port}`);
   });
 }
 
