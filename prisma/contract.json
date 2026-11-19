@@ -141,7 +141,7 @@
               "runOn": {
                 "nullable": false,
                 "type": {
-                  "codecId": "pg/timestamp-temporal@1",
+                  "codecId": "pg/timestamp-date@1",
                   "kind": "scalar"
                 }
               }
@@ -550,30 +550,30 @@
               "columns": {
                 "created_at": {
                   "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "created_by": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": true
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "name": {
                   "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
+                  "dataType": "pg/varchar",
                   "nullable": false,
                   "typeParams": {
                     "length": 255
@@ -620,24 +620,24 @@
               "columns": {
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "name": {
                   "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
+                  "dataType": "pg/varchar",
                   "nullable": false,
                   "typeParams": {
                     "length": 255
                   }
                 },
                 "run_on": {
-                  "codecId": "pg/timestamp-temporal@1",
-                  "nativeType": "timestamp",
+                  "codecId": "pg/timestamp-date@1",
+                  "dataType": "pg/timestamp",
                   "nullable": false
                 }
               },
@@ -655,30 +655,30 @@
               "columns": {
                 "created_at": {
                   "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "expires_at": {
                   "codecId": "pg/timestamptz-date@1",
-                  "nativeType": "timestamptz",
+                  "dataType": "pg/timestamptz",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "token_hash": {
                   "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
+                  "dataType": "pg/varchar",
                   "nullable": false,
                   "typeParams": {
                     "length": 255
@@ -686,7 +686,7 @@
                 },
                 "user_id": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 }
               },
@@ -731,30 +731,30 @@
               "columns": {
                 "category_id": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 },
                 "created_at": {
                   "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "task_id": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": false
                 }
               },
@@ -809,48 +809,48 @@
               "columns": {
                 "created_at": {
                   "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": true
                 },
                 "created_by": {
                   "codecId": "pg/int4@1",
-                  "nativeType": "int4",
+                  "dataType": "pg/int4",
                   "nullable": true
                 },
                 "done": {
                   "codecId": "pg/bool@1",
+                  "dataType": "pg/bool",
                   "default": {
                     "kind": "literal",
                     "value": false
                   },
-                  "nativeType": "bool",
                   "nullable": true
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "is_deleted": {
                   "codecId": "pg/bool@1",
+                  "dataType": "pg/bool",
                   "default": {
                     "kind": "literal",
                     "value": false
                   },
-                  "nativeType": "bool",
                   "nullable": true
                 },
                 "title": {
                   "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
+                  "dataType": "pg/varchar",
                   "nullable": false,
                   "typeParams": {
                     "length": 255
@@ -890,25 +890,25 @@
               "columns": {
                 "created_at": {
                   "codecId": "pg/timestamptz-date@1",
+                  "dataType": "pg/timestamptz",
                   "default": {
                     "expression": "now()",
                     "kind": "function"
                   },
-                  "nativeType": "timestamptz",
                   "nullable": false
                 },
                 "id": {
                   "codecId": "pg/int4@1",
+                  "dataType": "pg/int4",
                   "default": {
                     "expression": "autoincrement()",
                     "kind": "function"
                   },
-                  "nativeType": "int4",
                   "nullable": false
                 },
                 "password_hash": {
                   "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
+                  "dataType": "pg/varchar",
                   "nullable": false,
                   "typeParams": {
                     "length": 255
@@ -916,7 +916,7 @@
                 },
                 "username": {
                   "codecId": "sql/varchar@1",
-                  "nativeType": "character varying",
+                  "dataType": "pg/varchar",
                   "nullable": false,
                   "typeParams": {
                     "length": 50
@@ -946,11 +946,13 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "4b3d1986f09d79535ba1e518f0cb7c06b9810a1fc7d6c6506fe086d31cd0debe"
+    "storageHash": "114039eb65f5d3e98d46c58a19c5277e1a62c4beaeff4bb702783bb0d472b76b"
   },
   "capabilities": {
     "postgres": {
       "distinctOn": true,
+      "forKeyShare": true,
+      "forNoKeyUpdate": true,
       "jsonAgg": true,
       "lateral": true,
       "limit": true,
@@ -961,9 +963,15 @@
       "checkConstraint": true,
       "defaultInInsert": true,
       "enums": true,
+      "forShare": true,
+      "forUpdate": true,
       "insertOnConflictSkip": true,
+      "insertOnConflictTarget": true,
       "insertOnConflictWithoutTarget": true,
       "lateral": true,
+      "lockNowait": true,
+      "lockOf": true,
+      "lockSkipLocked": true,
       "returning": true,
       "scalarList": true
     }

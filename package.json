@@ -21,7 +21,7 @@
     "contract:emit": "prisma contract emit"
   },
   "dependencies": {
-    "@prisma/orm-postgres": "^8.0.0-rc.13",
+    "@prisma/orm-postgres": "8.0.0-rc.24",
     "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
@@ -34,13 +34,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.7",
-    "@prisma/cli-engine": "^0.6.2",
+    "@prisma/cli-engine": "0.10.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.3",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
-    "prisma": "^8.0.0-rc.19",
+    "prisma": "8.0.0-rc.34",
     "supertest": "^7.2.2",
     "typescript": "^7.0.2"
   }
