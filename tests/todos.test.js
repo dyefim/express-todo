@@ -181,10 +181,27 @@ describe("todos can be sorted", () => {
 
 describe("todos can be searched", () => {
   let userA;
+  let userB;
 
   before(async () => {
     userA = await createUser("UserA_todos_test_searched");
+    userB = await createUser("UserB_todos_test_searched");
   });
+
+  afterEach(async () => {
+    await prismaDb.orm.public.Tasks.where((t) =>
+      t.createdBy.in([userA.id, userB.id]),
+    ).deleteAndCount();
+  });
+
+  const searchTitles = async (user, query) => {
+    const userRequest = await asUser(user);
+    const res = await userRequest
+      .get(`/todos?search=${encodeURIComponent(query)}`)
+      .expect(200);
+
+    return res.body.data.map((todo) => todo.title);
+  };
 
   test("by title", async () => {
     const userRequest = await asUser(userA);
@@ -196,6 +213,145 @@ describe("todos can be searched", () => {
       assert.strictEqual(res.body.data.length, 1);
       assert.strictEqual(res.body.data[0].title, "First todo");
     });
+  });
+
+  test("ignoring case", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "First todo" });
+
+    assert.deepStrictEqual(await searchTitles(userA, "fIrSt"), ["First todo"]);
+  });
+
+  test("matches any word of the title", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "Buy fresh milk" });
+
+    assert.deepStrictEqual(await searchTitles(userA, "milk"), [
+      "Buy fresh milk",
+    ]);
+    assert.deepStrictEqual(await searchTitles(userA, "fresh"), [
+      "Buy fresh milk",
+    ]);
+  });
+
+  test("requires every word of the query", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "Buy milk" });
+    await userRequest.post("/todos").send({ title: "Buy bread" });
+
+    assert.deepStrictEqual(await searchTitles(userA, "buy milk"), ["Buy milk"]);
+  });
+
+  test("matches other forms of a word (stemming)", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "Go running" });
+
+    assert.deepStrictEqual(await searchTitles(userA, "runs"), ["Go running"]);
+  });
+
+  test("excludes words with a leading minus", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "Buy milk" });
+    await userRequest.post("/todos").send({ title: "Buy bread" });
+
+    assert.deepStrictEqual(await searchTitles(userA, "buy -milk"), [
+      "Buy bread",
+    ]);
+  });
+
+  test("returns nothing when there is no match", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "First todo" });
+
+    await userRequest.get("/todos?search=nonexistent").expect((res) => {
+      assert.deepStrictEqual(res.body.data, []);
+      assert.strictEqual(res.body.page.totalElements, 0);
+    });
+  });
+
+  test("returns every todo for an empty search", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "First todo" });
+    await userRequest.post("/todos").send({ title: "Second todo" });
+
+    await userRequest.get("/todos?search=").expect((res) => {
+      assert.strictEqual(res.body.data.length, 2);
+    });
+  });
+
+  test("treats SQL wildcards and operators as plain text", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "First todo" });
+
+    for (const query of ["%", "_", "&", "|", "!", ":*", "'", "((", "a:b"]) {
+      assert.deepStrictEqual(await searchTitles(userA, query), [], query);
+    }
+  });
+
+  test("only returns the current user's todos", async () => {
+    const requestA = await asUser(userA);
+    const requestB = await asUser(userB);
+
+    await requestA.post("/todos").send({ title: "Shared title" });
+    await requestB.post("/todos").send({ title: "Shared title" });
+
+    const res = await requestA.get("/todos?search=shared").expect(200);
+
+    assert.strictEqual(res.body.data.length, 1);
+    assert.strictEqual(res.body.data[0].createdBy, userA.id);
+  });
+
+  test("does not return soft deleted todos", async () => {
+    const userRequest = await asUser(userA);
+
+    const { body } = await userRequest
+      .post("/todos")
+      .send({ title: "Deleted todo" });
+    await userRequest.delete(`/todos/${body.id}`).expect(204);
+
+    assert.deepStrictEqual(await searchTitles(userA, "deleted"), []);
+  });
+
+  test("is combined with sorting", async () => {
+    const userRequest = await asUser(userA);
+
+    await userRequest.post("/todos").send({ title: "B match" });
+    await userRequest.post("/todos").send({ title: "A match" });
+    await userRequest.post("/todos").send({ title: "Other" });
+
+    const res = await userRequest
+      .get("/todos?search=match&sort=title&order=desc")
+      .expect(200);
+
+    assert.deepStrictEqual(
+      res.body.data.map((todo) => todo.title),
+      ["B match", "A match"],
+    );
+  });
+
+  test("is combined with pagination", async () => {
+    const userRequest = await asUser(userA);
+
+    for (let i = 1; i <= 7; i++) {
+      await userRequest.post("/todos").send({ title: `Match ${i}` });
+    }
+    await userRequest.post("/todos").send({ title: "Other" });
+
+    const res = await userRequest
+      .get("/todos?search=match&size=5&page=2")
+      .expect(200);
+
+    assert.strictEqual(res.body.data.length, 2);
+    assert.strictEqual(res.body.page.totalElements, 7);
+    assert.strictEqual(res.body.page.totalPages, 2);
   });
 });
 

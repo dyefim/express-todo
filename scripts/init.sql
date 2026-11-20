@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS tasks (
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS tasks_search_idx ON tasks USING GIN (to_tsvector('english', title));
+
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,

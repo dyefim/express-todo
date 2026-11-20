@@ -10,7 +10,9 @@ const app = express();
 
 app.set("trust proxy", 1);
 
-app.use(logger);
+if (env.nodeEnv !== "test") {
+  app.use(logger);
+}
 app.use(express.json());
 
 app.use("/static", express.static(path.join(__dirname, "files")));

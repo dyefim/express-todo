@@ -3,8 +3,8 @@
 
 model Users {
   id            Int             @id(map: "users_pkey") @default(autoincrement())
-  username      VarChar(50)     @unique(map: "users_username_key")
-  passwordHash  VarChar(255)    @map("password_hash")
+  username      Varchar(50)     @unique(map: "users_username_key")
+  passwordHash  Varchar(255)    @map("password_hash")
   createdAt     TimestamptzJsDate     @default(now()) @map("created_at")
   categories    Categories[]
   refreshTokens RefreshTokens[]
@@ -15,7 +15,7 @@ model Users {
 
 model Categories {
   id             Int              @id(map: "categories_pkey") @default(autoincrement())
-  name           VarChar(255)     @unique(map: "categories_name_key")
+  name           Varchar(255)     @unique(map: "categories_name_key")
   createdAt      TimestamptzJsDate      @default(now()) @map("created_at")
   createdBy      Int?             @map("created_by")
   taskCategories TaskCategories[]
@@ -26,8 +26,8 @@ model Categories {
 
 model Pgmigrations {
   id    Int          @id(map: "pgmigrations_pkey") @default(autoincrement())
-  name  VarChar(255)
-  runOn Timestamp    @map("run_on")
+  name  Varchar(255)
+  runOn TimestampJsDate    @map("run_on")
 
   @@map("pgmigrations")
 }
@@ -35,7 +35,7 @@ model Pgmigrations {
 model RefreshTokens {
   id        Int          @id(map: "refresh_tokens_pkey") @default(autoincrement())
   userId    Int          @map("user_id")
-  tokenHash VarChar(255) @map("token_hash")
+  tokenHash Varchar(255) @map("token_hash")
   expiresAt TimestamptzJsDate  @map("expires_at")
   createdAt TimestamptzJsDate  @default(now()) @map("created_at")
   user      Users        @relation(fields: [userId], references: [id], onDelete: Cascade, map: "refresh_tokens_user_id_fkey", index: false)
@@ -46,7 +46,7 @@ model RefreshTokens {
 
 model Tasks {
   id             Int              @id(map: "tasks_pkey") @default(autoincrement())
-  title          VarChar(255)
+  title          Varchar(255)
   done           Boolean?         @default(false)
   createdBy      Int?             @map("created_by")
   createdAt      TimestamptzJsDate?     @default(now()) @map("created_at")
@@ -54,6 +54,7 @@ model Tasks {
   taskCategories TaskCategories[]
   users          Users?           @relation(fields: [createdBy], references: [id], onDelete: Cascade, map: "tasks_created_by_fkey", index: false)
 
+  @@fullTextIndex([title], name: "tasks_search_idx")
   @@map("tasks")
 }
 
