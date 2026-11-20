@@ -54,6 +54,7 @@ model Tasks {
   taskCategories TaskCategories[]
   users          Users?           @relation(fields: [createdBy], references: [id], onDelete: Cascade, map: "tasks_created_by_fkey", index: false)
 
+  @@fullTextIndex([title], name: "tasks_search_idx")
   @@map("tasks")
 }
 

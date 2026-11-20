@@ -1,3 +1,4 @@
+import { websearchToTsquery } from "@prisma/orm-postgres/target/full-text";
 import type { RequestHandler } from "express";
 import { db } from "../prisma/db";
 
@@ -53,7 +54,7 @@ export const getTodos: RequestHandler = async (req, res, next) => {
       isDeleted: false,
     });
     const filtered = search
-      ? tasks.where((t) => t.title.ilike(`%${search}%`))
+      ? tasks.where((t) => t.title.fullTextMatches(websearchToTsquery(search)))
       : tasks;
 
     const [{ total }, todos] = await Promise.all([

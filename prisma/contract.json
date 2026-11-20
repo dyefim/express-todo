@@ -877,7 +877,25 @@
                   }
                 }
               ],
-              "indexes": [],
+              "indexes": [
+                {
+                  "columns": [
+                    "title"
+                  ],
+                  "name": "tasks_search_idx_e0dd1131",
+                  "options": {
+                    "language": "english",
+                    "weightGroups": [
+                      [
+                        "title"
+                      ]
+                    ]
+                  },
+                  "prefix": "tasks_search_idx",
+                  "type": "fullText",
+                  "unique": false
+                }
+              ],
               "primaryKey": {
                 "columns": [
                   "id"
@@ -946,7 +964,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "114039eb65f5d3e98d46c58a19c5277e1a62c4beaeff4bb702783bb0d472b76b"
+    "storageHash": "8e72280dde8b32d5be18c4b24414ff5106a8506b38c40b87a4d7aedc6418e115"
   },
   "capabilities": {
     "postgres": {

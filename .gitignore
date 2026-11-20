@@ -44,3 +44,9 @@ Thumbs.db
 .cache/
 .tmp/
 temp/
+
+# Prisma agent skills (regenerate with `npx prisma skills sync`)
+.agents/skills/prisma-**
+.claude/skills/prisma-**
+.cursor/skills/prisma-**
+.devin/skills/prisma-**
