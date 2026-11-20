@@ -242,9 +242,7 @@ describe("todos can be searched", () => {
     await userRequest.post("/todos").send({ title: "Buy milk" });
     await userRequest.post("/todos").send({ title: "Buy bread" });
 
-    assert.deepStrictEqual(await searchTitles(userA, "buy milk"), [
-      "Buy milk",
-    ]);
+    assert.deepStrictEqual(await searchTitles(userA, "buy milk"), ["Buy milk"]);
   });
 
   test("matches other forms of a word (stemming)", async () => {
