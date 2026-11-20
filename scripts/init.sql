@@ -18,16 +18,13 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token_hash ON refresh_tokens(token
 CREATE TABLE IF NOT EXISTS tasks (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
-    search tsvector GENERATED ALWAYS AS (
-        setweight(to_tsvector('english', title), 'A')
-    ) STORED,
     done BOOLEAN DEFAULT false,
     is_deleted BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS tasks_search_idx ON tasks USING GIN (search);
+CREATE INDEX IF NOT EXISTS tasks_search_idx ON tasks USING GIN (to_tsvector('english', title));
 
 CREATE TABLE IF NOT EXISTS categories (
     id SERIAL PRIMARY KEY,
